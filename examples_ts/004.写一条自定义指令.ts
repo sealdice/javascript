@@ -1,10 +1,12 @@
 // 编写一条自定义指令
+
 // 先将扩展模块创建出来，如果已创建就直接使用
 let ext = seal.ext.find('test');
 if (!ext) {
   ext = seal.ext.new('test', '木落', '1.0.0');
   seal.ext.register(ext);
 }
+
 // 创建指令 .seal
 // 这个命令的功能为，显示“抓到一只海豹的文案”
 // 如果命令写“.seal ABC”，那么文案中将海豹命名为“ABC”
@@ -12,6 +14,7 @@ if (!ext) {
 const cmdSeal = seal.ext.newCmdItemInfo();
 cmdSeal.name = 'seal'; // 指令名字，可用中文
 cmdSeal.help = '召唤一只海豹，可用.seal <名字> 命名';
+
 // 主函数，指令解析器会将指令信息解析，并储存在几个参数中
 // ctx 主要是和当前环境以及用户相关的内容，如当前发指令用户，当前群组信息等
 // msg 为原生态的指令内容，如指令文本，发送平台，发送时间等
@@ -19,7 +22,7 @@ cmdSeal.help = '召唤一只海豹，可用.seal <名字> 命名';
 cmdSeal.solve = (ctx, msg, cmdArgs) => {
   // 获取第一个参数，例如 .seal A B C
   // 这里 cmdArgs.getArgN(1) 的结果即是A，传参为2的话结果是B
-  let [val, _] = cmdArgs.getArgN(1);
+  let [val, _] = cmdArgs.getArgN(1)
   switch (val) {
     case 'help': {
       // 命令为 .seal help
@@ -36,6 +39,7 @@ cmdSeal.solve = (ctx, msg, cmdArgs) => {
       return seal.ext.newCmdExecuteResult(true);
     }
   }
-};
+}
+
 // 将命令注册到扩展中
 ext.cmdMap['seal'] = cmdSeal;
