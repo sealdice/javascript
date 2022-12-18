@@ -14,7 +14,7 @@ MOD作者可以将自己的成果上传至scripts目录。
 编译到js:
 
 ```
-npm install -g typescript prettier
-tsc
-prettier --write .\examples\004.写一条自定义指令.js
+npm install
+npx tsc
+npx prettier --write ./examples/004.写一条自定义指令.js
 ```
