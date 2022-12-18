@@ -107,7 +107,8 @@ declare namespace seal {
 
     /** 获取关键字参数，如“.ra 50 --key=20 --asm”时，有两个kwarg，一个叫key，一个叫asm */
     getKwargs(key: string): Kwarg;
-    getArgN(arg0: number): [string, boolean];
+    /** 获取第N个参数，从1开始，如“.ra 力量50 推门” 参数1为“力量50”，参数2是“推门” */
+    getArgN(n: number): string;
   }
 
 

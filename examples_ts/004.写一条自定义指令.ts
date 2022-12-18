@@ -22,7 +22,7 @@ cmdSeal.help = '召唤一只海豹，可用.seal <名字> 命名';
 cmdSeal.solve = (ctx, msg, cmdArgs) => {
   // 获取第一个参数，例如 .seal A B C
   // 这里 cmdArgs.getArgN(1) 的结果即是A，传参为2的话结果是B
-  let [val, _] = cmdArgs.getArgN(1)
+  let val = cmdArgs.getArgN(1)
   switch (val) {
     case 'help': {
       // 命令为 .seal help
