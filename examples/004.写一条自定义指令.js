@@ -1,3 +1,5 @@
+'use strict';
+Object.defineProperty(exports, '__esModule', { value: true });
 // 编写一条自定义指令
 // 先将扩展模块创建出来，如果已创建就直接使用
 let ext = seal.ext.find('test');

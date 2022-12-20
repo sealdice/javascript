@@ -177,5 +177,6 @@ declare namespace seal {
     newCmdItemInfo(): CmdItemInfo;
   }
 
-  export function replyToSender (ctx: MsgContext, msg:Message, text: string): void;
+  export function getCtxProxyFirst(ctx: MsgContext, msg: Message): MsgContext;
+  export function replyToSender(ctx: MsgContext, msg: Message, text: string): void;
 }
