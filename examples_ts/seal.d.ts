@@ -177,6 +177,40 @@ declare namespace seal {
     newCmdItemInfo(): CmdItemInfo;
   }
 
+  interface CocRuleInfo {
+    /** 序号 */
+    index: number;
+    /** .setcoc key */
+    key: string;
+    /** 已切换至规则 Name: Desc */
+    name: string;
+    /** 规则描述 */
+    desc: string;
+
+    /**
+     * 检定函数
+     * @param ctx 上下文对象
+     * @param d100 使用骰子骰出的值
+     * @param checkValue 检定线，对应属性，例如力量、敏捷等
+     */
+    check(ctx: MsgContext, d100: number, checkValue: number): CocRuleCheckRet;
+  }
+
+  interface CocRuleCheckRet {
+    /** 成功级别，失败小于0，成功大于0。大失败-2 失败-1 成功1 困难成功2 极难成功3 大成功4 */
+    successRank: number;
+    /** 大成功数值 */
+    criticalSuccessValue: number;
+  }
+
+  export const coc: {
+    newRule(): CocRuleInfo;
+    newRuleCheckResult(): CocRuleCheckRet;
+    registerRule(rule: CocRuleInfo): boolean;
+  }
+
+  /** 代骰模式下，获取被代理人信息 */
   export function getCtxProxyFirst(ctx: MsgContext, msg: Message): MsgContext;
+  /** 回复发送者(发送者私聊即私聊回复，群内即群内回复) */
   export function replyToSender(ctx: MsgContext, msg: Message, text: string): void;
 }
