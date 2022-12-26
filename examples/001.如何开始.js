@@ -1,7 +1,18 @@
+// ==UserScript==
+// @name         示例:如何开始
+// @author       木落
+// @version      1.0.0
+// @description  这是一个演示脚本，并没有任何实际作用。
+// @timestamp    1671368035
+// 2022-12-18
+// @license      Apache-2
+// @homepageURL  https://github.com/sealdice/javascript
+// ==/UserScript==
+
 /*
 这里是海豹支持的js脚本范例
 海豹使用的js脚本引擎为goja，对js的支持程度为：
-基本支持es6，能使用promise，但不支持async/await
+基本支持es6，能使用promise，但不支持async/await，同时不支持generator(因此不能做async/await的polyfill)
 
 特别注意一点是js引擎的整型为32位，请小心溢出问题。
 

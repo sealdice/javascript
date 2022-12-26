@@ -1,5 +1,3 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
 const rule = seal.coc.newRule();
 rule.index = 20; // 自定义序号必须大于等于20，可用.setcoc 20切换
 rule.key = '测试'; // 可用 .setcoc 测试 切换

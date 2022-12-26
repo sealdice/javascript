@@ -1,5 +1,15 @@
-// 编写一条自定义指令
+// ==UserScript==
+// @name         示例:编写一条自定义指令
+// @author       木落
+// @version      1.0.0
+// @description  召唤一只海豹，可用.seal <名字> 命名
+// @timestamp    1671368035
+// 2022-12-18
+// @license      Apache-2
+// @homepageURL  https://github.com/sealdice/javascript
+// ==/UserScript==
 
+// 编写一条自定义指令
 // 先将扩展模块创建出来，如果已创建就直接使用
 let ext = seal.ext.find('test');
 if (!ext) {
