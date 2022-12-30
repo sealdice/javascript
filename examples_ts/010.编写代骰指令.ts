@@ -34,7 +34,7 @@ cmdCatch.solve = (ctx, msg, cmdArgs) => {
   let val = cmdArgs.getArgN(1)
   switch (val) {
     case 'help': {
-      // 命令为 .seal help
+      // 命令为 .catch help
       const ret = seal.ext.newCmdExecuteResult(true);
       ret.showHelp = true;
       return ret;

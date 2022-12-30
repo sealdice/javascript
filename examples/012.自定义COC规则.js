@@ -1,3 +1,14 @@
+// ==UserScript==
+// @name         示例:自定义COC规则
+// @author       木落
+// @version      1.0.0
+// @description  自设规则，出1大成功，出100大失败。困难极难等保持原样
+// @timestamp    1671886435
+// 2022-12-24
+// @license      Apache-2
+// @homepageURL  https://github.com/sealdice/javascript
+// ==/UserScript==
+
 const rule = seal.coc.newRule();
 rule.index = 20; // 自定义序号必须大于等于20，可用.setcoc 20切换
 rule.key = '测试'; // 可用 .setcoc 测试 切换

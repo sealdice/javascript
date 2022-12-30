@@ -141,6 +141,10 @@ declare namespace seal {
     author: string;
     /** 指令映射 */
     cmdMap: { [key: string]: CmdItemInfo };
+    /** 存放数据 */
+    storageSet(key: string, value: string);
+    /** 取数据 */
+    storageGet(key: string): string;
   }
 
   interface CmdExecuteResult {

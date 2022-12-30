@@ -37,7 +37,7 @@
     "experimentalDecorators": true /* Enables experimental support for ES7 decorators. */,
     "emitDecoratorMetadata": true /* Enables experimental support for emitting type metadata for decorators. */,
 
-    "lib": ["ES5", "DOM", "ES2015.Promise", "ScriptHost"],
+    "lib": ["ES6", "DOM", "ES2015.Promise", "ScriptHost", "ES2017.Object"],
     "typeRoots": [
       "../UnityProject/Assets/Vendors/Puerts/Typing",
       "../UnityProject/Assets/Gen/Typing",
