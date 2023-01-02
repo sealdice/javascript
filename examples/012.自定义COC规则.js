@@ -10,9 +10,9 @@
 // ==/UserScript==
 
 const rule = seal.coc.newRule();
-rule.index = 20; // 自定义序号必须大于等于20，可用.setcoc 20切换
-rule.key = '测试'; // 可用 .setcoc 测试 切换
-rule.name = '自设规则'; // 已切换至规则 name: desc
+rule.index = 20; // 自定义序号必须大于等于20，代表可用.setcoc 20切换
+rule.key = '测试'; // 代表可用 .setcoc 测试 切换
+rule.name = '自设规则'; // 已切换至规则文本 name: desc
 rule.desc = '出1大成功\n出100大失败';
 // d100 为出目，checkValue 为技能点数
 rule.check = (ctx, d100, checkValue) => {
@@ -50,3 +50,5 @@ rule.check = (ctx, d100, checkValue) => {
   ret.criticalSuccessValue = criticalSuccessValue;
   return ret;
 };
+// 注册规则
+seal.coc.registerRule(rule);
