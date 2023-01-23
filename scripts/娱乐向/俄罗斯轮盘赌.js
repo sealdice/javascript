@@ -15,19 +15,19 @@ if (!ext) {
     seal.ext.register(ext);
 }
 var cmd = seal.ext.newCmdItemInfo();
-cmd.name = 'Roulette';
+cmd.name = '开枪';
 cmd.help = '俄罗斯轮盘赌\n指令：.开枪';
 cmd.disabledInPrivate = true;
 cmd.solve = function (ctx, msg, argv) {
     var key = cmd.name + msg.groupId;
-    var ret = seal.ext.newCmdExecuteResult(true), data = JSON.parse(ext.storageGet(key) || '[]'), text = '>>>';
+    var ret = seal.ext.newCmdExecuteResult(true), data = JSON.parse(ext.storageGet(key) || '[]'), text = '>>>\n';
     var rand = function (min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; };
     if (argv.getArgN(1) == 'help') {
         ret.showHelp = true;
         return ret;
     }
     if (data.length == 0) {
-        text = '更换弹夹，游戏开始。\n>>>\n';
+        seal.replyToSender(ctx, msg, '更换弹夹完成，游戏重新开始。')
         data = Array.from(Array(6), function (v) { return v; });
         data[rand(0, 5)] = 'BOOM!';
     }
@@ -37,7 +37,7 @@ cmd.solve = function (ctx, msg, argv) {
         data = [];
     }
     else {
-        text += '存活确认！';
+        text += '存活确认！' + `剩余 ${data.length} 子弹`;
     }
     ext.storageSet(key, JSON.stringify(data));
     seal.replyToSender(ctx, msg, text);

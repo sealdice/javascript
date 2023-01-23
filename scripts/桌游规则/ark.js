@@ -26,7 +26,7 @@ function checkRaw(expText, ctx) {
     var val = Number(seal.format(ctx, '{' + expText + '}'));
     var roll = Number(seal.format(ctx, '{1d100}'));
     var res = '', s = true;
-    if (roll > 95 || roll < 0) {
+    if (roll > 95 || val < 0) {
         res = '大失败';
         s = false;
     }
@@ -65,7 +65,7 @@ function check(expText, ba, ctx) {
     return text;
 }
 var rk = seal.ext.newCmdItemInfo();
-rk.name = '明日方舟检定';
+rk.name = 'rk';
 rk.help = "\n\u6CF0\u62C9TRPG ver:3.2 \u68C0\u5B9A\n.rk \u7A7A\u53C2\u6570\u8FD4\u56DE rk help\n.rk <\u8868\u8FBE\u5F0F> [\u539F\u56E0] \u5355\u6B21\u68C0\u5B9A\n\u8868\u8FBE\u5F0F\u683C\u5F0F\uFF1A\n- \u6B21\u6570#\u6280\u80FD \u591A\u6B21\u68C0\u5B9A\n- \u6280\u80FD&\u6280\u80FD \u8054\u5408\u68C0\u5B9A\n- \u6280\u80FD+[\u6295\u9AB0\u8868\u8FBE\u5F0F] \u4FEE\u6B63\u6280\u80FD\u503C\n- b <\u6280\u80FD \u6218\u6597\u68C0\u5B9A\uFF08battle\uFF09\uFF0C\u81EA\u52A8\u52A0\u4E0A2d10\n- [\u96BE\u5EA6]\u6280\u80FD \u96BE\u5EA6\u68C0\u5B9A \n\u3010\u53EF\u4F7F\u7528 difficulty \u53C2\u6570\u7B80\u5316\u8F93\u5165\u3011\n\u3010 d1/d2/d3 \u5BF9\u5E94\u8F83\u96BE/\u56F0\u96BE/\u6781\u96BE \u3011\n\u4F8B\u5982\uFF1A.rk 3#\u6E90\u77F3\u7406\u8BBA&\u533B\u5B66 \u4E09\u6B21\u8054\u5408\u68C0\u5B9A\n.rk b \u529B\u91CF \u52A0\u503C\u4E3A2d10\u7684\u529B\u91CF\u68C0\u5B9A\uFF08\u6218\u6597\u968F\u673A\u6570\uFF09\n.rk d2\u529B\u91CF \u7B49\u540C .rk \u56F0\u96BE\u529B\u91CF\n";
 rk.solve = function (ctx, msg, argv) {
     var ret = seal.ext.newCmdExecuteResult(true), text = '';

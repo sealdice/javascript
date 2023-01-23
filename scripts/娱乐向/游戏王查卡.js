@@ -15,12 +15,12 @@ if (!ext) {
     seal.ext.register(ext);
 }
 const cmdkey = 'cmd/ygosh'
-cmd.name = '游戏王查卡'
+cmd.name = 'ygosh'
 cmd.help = `
 基于网站（https://ygocdb.com/）查询游戏王卡牌
 ygosh 
 - word 任意关键词
-- n next 下一页结果
+- next 下一页结果
 例如 .ygosh 青眼白龙`
 cmd.solve = (ctx, msg, cmdArgs) => {
     if (cmdArgs.getArgN(1) == 'help' || cmdArgs.args.length < 1) {
@@ -77,4 +77,4 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     return seal.ext.newCmdExecuteResult(true)
 }
 
-seal.ext.find('不是英文').cmdMap['ygosh'] = cmd;
+ext.cmdMap['ygosh'] = cmd;
