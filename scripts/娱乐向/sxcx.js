@@ -8,8 +8,14 @@
 // @homepageURL  https://github.com/sealdice/javascript
 // ==/UserScript==
 
+let ext = seal.ext.find('不是英文');
+if (!ext) {
+    ext = seal.ext.new('不是英文', 'nao', '1.0.0');
+    seal.ext.register(ext);
+}
+
 const cmd = seal.ext.newCmdItemInfo();
-cmd.name = 'sxcx'
+cmd.name = 'sx'
 cmd.help = `
 基于网站（https://lab.magiconch.com/nbnhhsh/）查询缩写
 sx <word>
@@ -62,4 +68,4 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     return seal.ext.newCmdExecuteResult(true)
 }
 
-seal.ext.find('fun').cmdMap['sx'] = cmd
+ext.cmdMap['sx'] = cmd
