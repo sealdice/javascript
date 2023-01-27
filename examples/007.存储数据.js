@@ -41,7 +41,7 @@ cmdFeed.solve = (ctx, msg, cmdArgs) => {
     }
     default: {
       const data = JSON.parse(ext.storageGet('feedInfo') || '{}');
-      const name = cmdArgs.getArgN(2) || '空气';
+      const name = cmdArgs.getArgN(1) || '空气';
       if (data[name] === undefined) {
         data[name] = 0;
       }
