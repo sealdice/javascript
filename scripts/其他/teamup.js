@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         团队管理
 // @author       檀轶步棋、NAO
-// @version      1.0.0
-// @timestamp    1674394890
+// @version      1.0.1
+// @timestamp    1675839686
 // @license      MIT
 // ==/UserScript==
 /** 骰子自己的QQ号，team make时会被排除 */
@@ -10,7 +10,7 @@ let excQQ = [];
 // 注：如果你将骰子绑定到了多个账号，或者想要排除特定账号，请逐一添加，格式如["QQ:1", "QQ:2", ...]
 let ext = seal.ext.find("teamup");
 if (!ext) {
-    ext = seal.ext.new("teamup", "檀轶步棋", "1.0.0");
+    ext = seal.ext.new("teamup", "檀轶步棋", "1.0.1");
     seal.ext.register(ext);
 }
 class InfoManager {
@@ -26,7 +26,7 @@ class InfoManager {
             return false;
     }
     getAllTeams() {
-        if (JSON.stringify(this.teamInfos) != "{}") {
+        if (JSON.stringify(this.teamInfos) !== "{}") {
             let lst = [];
             for (const [teamName, v] of Object.entries(this.teamInfos)) {
                 lst.push(teamName);
@@ -37,7 +37,7 @@ class InfoManager {
             return false;
     }
     makeTeam(name, members) {
-        if (members != undefined && members.length > 0) {
+        if (members !== undefined && members.length > 0) {
             this.teamInfos[name] = members;
         }
         else
@@ -45,13 +45,13 @@ class InfoManager {
         ext.storageSet(`team_info_${this.ctx.group.groupId}`, JSON.stringify(this.teamInfos));
     }
     destroyTeam(name) {
-        if (this.teamInfos[name] != undefined) {
+        if (this.teamInfos[name] !== undefined) {
             this.teamInfos[name] = undefined;
         }
         ext.storageSet(`team_info_${this.ctx.group.groupId}`, JSON.stringify(this.teamInfos));
     }
     deleteMembers(team, members) {
-        if (this.getTeam(team) != false || members.length <= 0) {
+        if (this.getTeam(team) !== false || members.length <= 0) {
             members.forEach((member) => {
                 try {
                     let index = this.teamInfos[team].indexOf(member);
@@ -67,7 +67,7 @@ class InfoManager {
             throw new Error("团队不存在或团队成员无效。");
     }
     addMembers(team, members) {
-        if (this.getTeam(team) != false || members.length <= 0) {
+        if (this.getTeam(team) !== false || members.length <= 0) {
             members.forEach((member) => {
                 try {
                     this.teamInfos[team].push(member);
@@ -84,21 +84,21 @@ class InfoManager {
 }
 let cmd = seal.ext.newCmdItemInfo();
 cmd.name = "team";
-cmd.help = ".team make @xxx @yyy (团队名) //创建团队，团队名可选" +
-    ".team del 团队名 //删除团队" +
-    ".team call 团队名 //呼叫团队" +
-    ".team add @xxx @yyy 团队名 //向团队中添加成员" +
-    ".team rm @xxx @yyy 团队名 //从团队中删除成员" +
-    ".team show 团队名 //展示该团队所有成员QQ" +
-    ".team showAll //展示本群所有团队及其成员QQ" +
+cmd.help = ".team make @xxx @yyy (团队名) //创建团队，团队名可选\n" +
+    ".team del 团队名 //删除团队\n" +
+    ".team call 团队名 //呼叫团队\n" +
+    ".team add @xxx @yyy 团队名 //向团队中添加成员\n" +
+    ".team rm @xxx @yyy 团队名 //从团队中删除成员\n" +
+    ".team show 团队名 //展示该团队所有成员\n" +
+    ".team showAll //展示本群所有团队及其成员\n" +
     ".team delAll //删除本群所有团队";
 cmd.allowDelegate = true;
 cmd.solve = (ctx, msg, args) => {
     ctx.delegateText = "";
-    if (msg.platform != "QQ") {
-        seal.replyToSender(ctx, msg, "非常抱歉，该指令暂不支持QQ以外的平台，包括QQ频道。");
-        return seal.ext.newCmdExecuteResult(false);
-    }
+    // if (msg.platform != "QQ") {
+    //     seal.replyToSender(ctx, msg, "非常抱歉，该指令暂不支持QQ以外的平台，包括QQ频道。");
+    //     return seal.ext.newCmdExecuteResult(false);
+    // }
     let manager = new InfoManager(ctx);
     switch (args.getArgN(1)) {
         case "help": {
@@ -123,16 +123,16 @@ cmd.solve = (ctx, msg, args) => {
                         let atInfos = [];
                         let readName = args.getArgN(2);
                         let teamName = undefined;
-                        if (readName == "" || readName === undefined) {
+                        if (readName === "" || readName === undefined) {
                             for (let n = 1; true; n++) {
-                                if (manager.getTeam(`team${n}`) == false) {
+                                if (manager.getTeam(`team${n}`) === false) {
                                     teamName = `team${n}`;
                                     break;
                                 }
                             }
                         }
                         else {
-                            if (manager.getTeam(readName) != false) {
+                            if (manager.getTeam(readName) !== false) {
                                 seal.replyToSender(ctx, msg, `错误：团队${readName}已经存在，请删除现存团队后重新创建。`);
                                 return seal.ext.newCmdExecuteResult(false);
                             }
@@ -142,7 +142,7 @@ cmd.solve = (ctx, msg, args) => {
                         args.at.forEach((v) => {
                             if (excQQ.length > 0) {
                                 excQQ.forEach((x) => {
-                                    if (x != v.userId) {
+                                    if (x !== v.userId) {
                                         atInfos.push(v.userId);
                                     }
                                 });
@@ -170,16 +170,16 @@ cmd.solve = (ctx, msg, args) => {
         case "call": {
             try {
                 let readName = args.getArgN(2);
-                if (readName == "" || readName === undefined) {
+                if (readName === "" || readName === undefined) {
                     seal.replyToSender(ctx, msg, `错误：请指定要呼叫的团队。`);
                     return seal.ext.newCmdExecuteResult(false);
                 }
                 let allMembers = manager.getTeam(readName);
-                if (allMembers != false) {
+                if (allMembers !== false) {
                     let memberList = [];
                     for (const [k, v] of Object.entries(allMembers)) {
-                        let member = v.match("^QQ:([0-9]+)$");
-                        if (member[1] != "" && member[1] != null) {
+                        let member = v.match("^[a-zA-Z]+:([0-9]+)$");
+                        if (member[1] !== "" && member[1] != null) {
                             memberList.push(member[1]);
                         }
                     }
@@ -207,11 +207,11 @@ cmd.solve = (ctx, msg, args) => {
                 case 50: {
                     try {
                         let readName = args.getArgN(2);
-                        if (readName == "" || readName === undefined) {
+                        if (readName === "" || readName === undefined) {
                             seal.replyToSender(ctx, msg, `错误：请指定要删除的团队。`);
                             return seal.ext.newCmdExecuteResult(false);
                         }
-                        if (manager.getTeam(readName) != false) {
+                        if (manager.getTeam(readName) !== false) {
                             manager.destroyTeam(readName);
                             seal.replyToSender(ctx, msg, `成功删除了\n${readName}。`);
                             return seal.ext.newCmdExecuteResult(true);
@@ -221,12 +221,14 @@ cmd.solve = (ctx, msg, args) => {
                         seal.replyToSender(ctx, msg, `错误：发生系统内部错误，错误信息\n${e}`);
                         return seal.ext.newCmdExecuteResult(false);
                     }
+                    break;
                 }
                 default: {
                     seal.replyToSender(ctx, msg, "错误：只有骰主、群主或管理员能创建团队。");
                     return seal.ext.newCmdExecuteResult(false);
                 }
             }
+            break;
         }
         case "delAll": {
             switch (ctx.privilegeLevel) {
@@ -258,9 +260,9 @@ cmd.solve = (ctx, msg, args) => {
                             return seal.ext.newCmdExecuteResult(false);
                         }
                         let readName = args.getArgN(2);
-                        if (readName != "" && readName !== undefined) {
+                        if (readName !== "" && readName !== undefined) {
                             let allMembers = manager.getTeam(readName);
-                            if (allMembers != false) {
+                            if (allMembers !== false) {
                                 let atInfos = [];
                                 args.at.forEach((v) => {
                                     // typeof是为了消除ts编译器报错，实际上没有必要
@@ -304,9 +306,9 @@ cmd.solve = (ctx, msg, args) => {
                             return seal.ext.newCmdExecuteResult(false);
                         }
                         let readName = args.getArgN(2);
-                        if (readName != "" && readName !== undefined) {
+                        if (readName !== "" && readName !== undefined) {
                             let allMembers = manager.getTeam(readName);
-                            if (allMembers != false) {
+                            if (allMembers !== false) {
                                 let atInfos = [];
                                 args.at.forEach((v) => {
                                     // typeof是为了消除ts编译器报错，实际上没有必要
@@ -346,13 +348,13 @@ cmd.solve = (ctx, msg, args) => {
         case "show": {
             try {
                 let readName = args.getArgN(2);
-                if (readName == "" || readName === undefined) {
+                if (readName === "" || readName === undefined) {
                     seal.replyToSender(ctx, msg, `错误：请指定要显示的团队。`);
                     return seal.ext.newCmdExecuteResult(false);
                 }
                 let allMembers = manager.getTeam(readName);
                 let memberList = [];
-                if (allMembers != false) {
+                if (allMembers !== false) {
                     for (const [k, v] of Object.entries(allMembers)) {
                         memberList.push(`- ${v}`);
                     }
@@ -372,13 +374,13 @@ cmd.solve = (ctx, msg, args) => {
         case "showAll": {
             let allTeamNames = manager.getAllTeams();
             let reply = `群组${ctx.group.groupName}（${ctx.group.groupId}）的全部团队：\n`;
-            if (allTeamNames != false) {
+            if (allTeamNames !== false) {
                 for (const [i, name] of Object.entries(allTeamNames)) {
                     reply += `\n${name}\n`;
                     let allMembers = manager.getTeam(name);
                     console.log(name + "??" + JSON.stringify(allMembers));
                     let memberList = [];
-                    if (allMembers != false) {
+                    if (allMembers !== false) {
                         for (const [k, v] of Object.entries(allMembers)) {
                             memberList.push(`- ${v}`);
                         }
