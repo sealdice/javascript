@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SwordWorld2.5
 // @author       木落
-// @version      1.0.0
+// @version      1.1.0
 // @description  在海豹中使用剑世界2.5规则，请使用.sw help查看指令说明。大概需要30MB内存
 // @timestamp    1676821025
 // 2023/1/23
