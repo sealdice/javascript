@@ -71,7 +71,28 @@ declare namespace seal {
     nickname: string;
     userId: string;
   }
+  
+  /** 通信端点，即骰子关联的帐号的信息 */
+  export interface EndPointInfo {
+    id: string;
+    /** 昵称 */
+    nickname: string;
+    /** 状态 0 断开 1已连接 2连接中 3连接失败 */
+    state: number;
+    /** 用户id */
+    userId: string;
+    /** 命令执行数量 */
+    cmdExecutedNum: number;
+    /** 最后命令执行时间 */
+    cmdExecutedLastTime: number;
+    /** 平台 */
+    platform: string;
+    /** 是否启用 */
+    enable: boolean;
 
+    // adapter: PlatformAdapter;
+  }
+  
   export interface AtInfo {
     userId: string;
   }
@@ -212,6 +233,20 @@ declare namespace seal {
     newRuleCheckResult(): CocRuleCheckRet;
     registerRule(rule: CocRuleInfo): boolean;
   }
+
+  export const gameSystem: {
+    /** 添加一个规则模板，需要是JSON文本格式 */
+    newTemplate(data: string);
+    /** 添加一个规则模板，需要是YAML文本格式 */
+    newTemplateByYaml(data: string);
+  }
+
+  /** 新建一条消息 */
+  export function newMessage(): Message;
+  /** 创建一个临时Context */
+  export function createTempCtx(ep: EndPointInfo, msg: Message): MsgContext;
+  /** 应用名片模板，返回值为格式化完成的名字。此时已经设置好名片(如有权限) */
+  export function applyPlayerGroupCardByTemplate(ctx: MsgContext, tmpl: string): string;
 
   /** 代骰模式下，获取被代理人信息 */
   export function getCtxProxyFirst(ctx: MsgContext, msg: Message): MsgContext;
