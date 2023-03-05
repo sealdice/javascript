@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         定时消息
 // @author       SzzRain
-// @version      1.1.6
+// @version      1.1.9
 // @description  设置定时发送消息，支持设置每天准时发送或间隔一段时间发送（使用 .定时任务 help 查看详情）
-// @timestamp    1673592570
+// @timestamp    1675829730
 // @license      MIT
 // @homepageURL  https://github.com/Szzrain
 // ==/UserScript==
@@ -54,43 +54,79 @@ class TaskTimer {
         }
     }
     timingTask(task) {
-        let todaySec = this.getTodayUntilNow()
-        // console.log("tmcall")
-        if (task['today'] !== this.getToday()) {
-            // console.log("refresh date")
-            task['today'] = this.getToday()
-            task['today_done'] = false
-        }
-        if (task["first_work"]) {
-            // console.log("first work call")
-            if (todaySec >= task["task_sec"]) {
-                task["today_done"] = true;
-                task["first_work"] = false;
-            } else {
-                task["first_work"] = false;
+        if (task["frequency"] === "daily") {
+            let todaySec = this.getTodayUntilNow()
+            // console.log("tmcall")
+            if (task['today'] !== this.getToday()) {
+                // console.log("refresh date")
+                task['today'] = this.getToday()
+                task['today_done'] = false
             }
-        }
-        if (!(task["today_done"])) {
-            // console.log("execute task")
-            if (todaySec >= task["task_sec"]) {
-                try {
-                    task['fun'](task['arg']);
-                } catch (e) {
-                    console.log(e);
-                } finally {
+            if (task["first_work"]) {
+                // console.log("first work call")
+                if (todaySec >= task["task_sec"]) {
                     task["today_done"] = true;
-                    if (task["first_work"]) {
-                        task["first_work"] = false;
-                    }
-                    this.checkTimesAndRemove(task);
+                    task["first_work"] = false;
+                } else {
+                    task["first_work"] = false;
                 }
             }
+            if (!(task["today_done"])) {
+                // console.log("execute task")
+                if (todaySec >= task["task_sec"]) {
+                    try {
+                        task['fun'](task['arg']);
+                    } catch (e) {
+                        console.log(e);
+                    } finally {
+                        task["today_done"] = true;
+                        if (task["first_work"]) {
+                            task["first_work"] = false;
+                        }
+                        this.checkTimesAndRemove(task);
+                    }
+                }
+            }
+        } else if (task["frequency"] === "weekly") {
+            const d = new Date();
+            if (d.getDay() === task["work_day"]) {
+                let todaySec = this.getTodayUntilNow()
+                if (task["first_work"]) {
+                    // console.log("first work call")
+                    if (todaySec >= task["task_sec"]) {
+                        task["this_week_done"] = true;
+                        task["first_work"] = false;
+                    } else {
+                        task["first_work"] = false;
+                    }
+                }
+                if (!(task["this_week_done"])) {
+                    // console.log("execute task")
+                    if (todaySec >= task["task_sec"]) {
+                        try {
+                            task['fun'](task['arg']);
+                        } catch (e) {
+                            console.log(e);
+                        } finally {
+                            task["this_week_done"] = true;
+                            if (task["first_work"]) {
+                                task["first_work"] = false;
+                            }
+                            this.checkTimesAndRemove(task);
+                        }
+                    }
+                }
+            } else {
+                task["this_week_done"] = false;
+            }
         }
+
     }
     checkTimesAndRemove(task) {
         if (task["times"] > 0) {
             task["times"]--;
-        } else if (task["times"] > -10) {
+        }
+        if (task["times"] > -10) {
             this.taskqueue.delete(task["id"]);
         }
     }
@@ -102,7 +138,7 @@ class TaskTimer {
         let i = new Date();
         return i.getDay();
     }
-    joinTask(ctx, fun, arg, interval = null, timing = null, exeTimes = -10, frequency = "daily") {
+    joinTaskDaily(ctx, fun, arg, interval = null, timing = null, exeTimes = -10) {
         if ((interval != null && timing != null) || (interval == null && timing == null)) {
             throw new Error("参数不正确，interval和timing同时出现或都为null");
         }
@@ -129,7 +165,7 @@ class TaskTimer {
             task["today_done"] = false;
             task["first_work"] = true;
             task["today"] = this.getToday();
-            task["frequency"] = frequency;
+            task["frequency"] = "daily";
         } else if (interval != null) {
             task["next_sec"] = new Date().getTime() + interval;
         }
@@ -137,6 +173,42 @@ class TaskTimer {
             task["isGroup"] = true;
         }
         this.taskqueue.set(task["id"],task);
+        return task
+    }
+    joinTaskWeekly(ctx, fun, arg, workday, timing, exeTimes = -10) {
+        if (workday === 7) {
+            workday = 0
+        }
+        if ( (workday == null || timing == null)) {
+            throw new Error("参数不正确，workday或timing为null");
+        }
+        if ((!(0 <= timing && timing < 24))) {
+            throw new Error("参数不正确，时间的取值范围为[0,24)");
+        }
+        if (workday > 6 || workday < 0) {
+            throw new Error("参数不正确，星期天数应当在0-7之间，考虑到兼容性，0和7都算星期日");
+        }
+        // console.log("taskADD")
+        let task = {
+            "fun": fun,
+            "id": this.getUUID(),
+            "times": exeTimes,
+            "arg": arg,
+            "timing": timing,
+            "creator": ctx.player.userId,
+            "isGroup": false,
+            "group": ctx.group.groupId
+        }
+        task["task_sec"] = timing * 3600;
+        task["this_week_done"] = false;
+        task["work_day"] = workday
+        task["first_work"] = true;
+        task["frequency"] = "weekly";
+        if (!ctx.group.isPrivate) {
+            task["isGroup"] = true;
+        }
+        this.taskqueue.set(task["id"],task);
+        return task;
     }
     lookTaskWithCheck(ctx, id) {
         if (this.taskqueue.has(id)) {
@@ -154,7 +226,7 @@ class TaskTimer {
         return "id对应的任务不存在或已经被删除";
     }
     getTaskInfo(task) {
-        return "Id:" + task["id"] + " 位于:" + task["group"] + " 创建者:" + task["creator"] + "\n" + "内容:" + task["arg"][2] + "\ninterval: " + task["interval"] + "\ntiming: " + task["timing"] + "\ntimes: " + task["times"];
+        return "Id:" + task["id"] + " 位于:" + task["group"] + " 创建者:" + task["creator"] + "\n" + "frequency:" + task["frequency"] + "\ninterval: " + task["interval"] + "\ntiming: " + task["timing"] + "\ntimes: " + task["times"]+ "\n内容:" + task["arg"][2];
     }
     setTaskExecTimeWithCheck(ctx, id, times) {
         if (this.taskqueue.has(id)) {
@@ -229,11 +301,11 @@ function messageTask(args) {
     seal.replyToSender(ctx, msg, text);
 }
 if (!seal.ext.find('定时任务')) {
-    const ext = seal.ext.new('定时任务', 'SzzRain', '1.1.6');
+    const ext = seal.ext.new('定时任务', 'SzzRain', '1.1.9');
     // 创建一个命令
     const cmdTimedTask = seal.ext.newCmdItemInfo();
     cmdTimedTask.name = '定时任务';
-    cmdTimedTask.help = 'TaskTimer javascript for SealDice by SzzRain (QQ:1970978827) ver 1.1.6\n' +
+    cmdTimedTask.help = 'TaskTimer javascript for SealDice by SzzRain (QQ:1970978827) ver 1.1.9\n' +
         '=========================\n' +
         '食用方法：\n' +
         '\n' +
@@ -241,7 +313,10 @@ if (!seal.ext.find('定时任务')) {
         '# 每天6:06发送哼哼啊啊啊啊啊啊啊啊啊\n' +
         '\n' +
         '.定时任务 每天 14 1919810  \n' +
-        '# 每天14:00发送1919810\n' +
+        '# 每天14:00发送 1919810\n' +
+        '\n' +
+        '.定时任务 每周 1 9 海豹，嘿嘿，海豹嘿嘿  \n'+
+        '# 每周一 9:00发送 海豹，嘿嘿，海豹嘿嘿\n\n'+
         '\n' +
         '.定时任务 周期 10 你是一个一个一个啊啊啊  \n' +
         '# 每10秒发送1次你是一个一个一个啊啊啊\n' +
@@ -273,25 +348,39 @@ if (!seal.ext.find('定时任务')) {
             }
             case "每天":
                 // console.log("dingshi")
-                TaskTimer.__instance.joinTask(ctx, messageTask, msgTaskArgs, null, parseFloat(cmdArgs.getArgN(2)), -10,"daily");
+                msgTaskArgs = [ctx,msg,cmdArgs.getArgN(3)];
+                TaskTimer.__instance.joinTaskDaily(ctx, messageTask, msgTaskArgs, null, parseFloat(cmdArgs.getArgN(2)), -10);
                 TaskTimer.__instance.run();
                 seal.replyToSender(ctx, msg, "任务已加入队列");
                 break;
             case "daily":
                 // console.log("dingshi")
-                TaskTimer.__instance.joinTask(ctx, messageTask, msgTaskArgs, null, parseFloat(cmdArgs.getArgN(2)), -10,"daily");
+                msgTaskArgs = [ctx,msg,cmdArgs.getArgN(3)];
+                TaskTimer.__instance.joinTaskDaily(ctx, messageTask, msgTaskArgs, null, parseFloat(cmdArgs.getArgN(2)), -10);
                 TaskTimer.__instance.run();
                 seal.replyToSender(ctx, msg, "任务已加入队列");
                 break;
             case "周期":
                 // console.log("zhouqi" + parseFloat(cmdArgs.getArgN(2))*1000)
-                TaskTimer.__instance.joinTask(ctx, messageTask, msgTaskArgs, parseFloat(cmdArgs.getArgN(2))*1000, null,-10);
+                TaskTimer.__instance.joinTaskDaily(ctx, messageTask, msgTaskArgs, parseFloat(cmdArgs.getArgN(2))*1000, null,-10);
+                TaskTimer.__instance.run();
+                seal.replyToSender(ctx, msg, "任务已加入队列");
+                break;
+            case "每周":
+                msgTaskArgs = [ctx,msg,cmdArgs.getArgN(4)];
+                TaskTimer.__instance.joinTaskWeekly(ctx, messageTask, msgTaskArgs, parseFloat(cmdArgs.getArgN(2)), parseFloat(cmdArgs.getArgN(3)),-10);
+                TaskTimer.__instance.run();
+                seal.replyToSender(ctx, msg, "任务已加入队列");
+                break;
+            case "weekly":
+                msgTaskArgs = [ctx,msg,cmdArgs.getArgN(4)];
+                TaskTimer.__instance.joinTaskWeekly(ctx, messageTask, msgTaskArgs, parseFloat(cmdArgs.getArgN(2)), parseFloat(cmdArgs.getArgN(3)),-10);
                 TaskTimer.__instance.run();
                 seal.replyToSender(ctx, msg, "任务已加入队列");
                 break;
             case "cycle":
                 // console.log("zhouqi" + parseFloat(cmdArgs.getArgN(2))*1000)
-                TaskTimer.__instance.joinTask(ctx, messageTask, msgTaskArgs, parseFloat(cmdArgs.getArgN(2))*1000, null,-10);
+                TaskTimer.__instance.joinTaskDaily(ctx, messageTask, msgTaskArgs, parseFloat(cmdArgs.getArgN(2))*1000, null,-10);
                 TaskTimer.__instance.run();
                 seal.replyToSender(ctx, msg, "任务已加入队列");
                 break;
@@ -347,8 +436,6 @@ if (!seal.ext.find('定时任务')) {
 
     // 注册扩展
     seal.ext.register(ext);
-    // const timer = new TaskTimer();
-    // ext.storageSet("TaskTimer",null);
-    const timer = new TaskTimer();
+    globalThis.timer = new TaskTimer()
     TaskTimer.__instance.run();
 }
