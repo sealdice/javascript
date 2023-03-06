@@ -4,49 +4,48 @@ import json
 
 app = Flask(__name__)
 chatbot = Chatbot(config={
-    "email": "email",
-    "password": "your password"
-
+    'account': 'your_openai_account',
+    'password': 'your_openai_password',
     # or "session_token": "..."
     # cookies on chat.openai.com as "__Secure-next-auth.session-token"
 
     # or "access_token": "<access_token>"
     # https://chat.openai.com/api/auth/session
+    'proxy': 'your_proxy',
 }
 )
-conversation = chatbot.get_conversations()[0]['id']
 
 
-def getchatgpt(data, chatbot, conversation):
+def getchatgpt(data, chatbot):
     full_text = ""
-    for line in chatbot.ask(data, conversation_id=conversation):
+    for line in chatbot.ask(data):
         full_text = line["message"]
     return full_text
 
 
 @app.route('/', methods=['POST'])
 def chat():
-    global chatbot, conversation
+    global chatbot
     while 1:
         text = request.json["text"]
         try:
             if text == "#reset":
                 chatbot.reset_chat()
-                chatbot.clear_conversations()
-                conversation = chatbot.get_conversations()[0]['id']
                 return "Chat session successfully reset."
             else:
-                return getchatgpt(text, chatbot, conversation)
+                return getchatgpt(text, chatbot)
         except:
             chatbot = Chatbot(config={
-                "email": "email",
-                "password": "your password"
+                'account': 'your_openai_account',
+                'password': 'your_openai_password',
 
                 # or "session_token": "..."
                 # cookies on chat.openai.com as "__Secure-next-auth.session-token"
 
                 # or "access_token": "<access_token>"
                 # https://chat.openai.com/api/auth/session
+                'proxy': 'your_proxy',
+                'conversation_id ': chatbot.get_conversations[-1]['id']
             }
             )
 
