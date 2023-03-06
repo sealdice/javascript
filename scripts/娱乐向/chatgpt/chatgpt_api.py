@@ -23,31 +23,33 @@ def getchatgpt(data, chatbot):
     return full_text
 
 
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
 def chat():
     global chatbot
-    while 1:
+    if request.method == 'POST':
         text = request.json["text"]
-        try:
-            if text == "#reset":
-                chatbot.reset_chat()
-                return "Chat session successfully reset."
-            else:
-                return getchatgpt(text, chatbot)
-        except:
-            chatbot = Chatbot(config={
-                'account': 'your_openai_account',
-                'password': 'your_openai_password',
+    else:
+        text = request.args.get('text')
+    try:
+        if text == "#reset":
+            chatbot.reset_chat()
+            return "Chat session successfully reset."
+        else:
+            return getchatgpt(text, chatbot)
+    except:
+        chatbot = Chatbot(config={
+            'account': 'your_openai_account',
+            'password': 'your_openai_password',
 
-                # or "session_token": "..."
-                # cookies on chat.openai.com as "__Secure-next-auth.session-token"
+            # or "session_token": "..."
+            # cookies on chat.openai.com as "__Secure-next-auth.session-token"
 
-                # or "access_token": "<access_token>"
-                # https://chat.openai.com/api/auth/session
-                'proxy': 'your_proxy',
-                'conversation_id ': chatbot.get_conversations[-1]['id']
-            }
-            )
+            # or "access_token": "<access_token>"
+            # https://chat.openai.com/api/auth/session
+            'proxy': 'your_proxy',
+            'conversation_id ': chatbot.get_conversations[-1]['id']
+        }
+        )
 
 
 if __name__ == '__main__':
