@@ -2,7 +2,7 @@
 // @name         跑团时间条
 // @author       nao
 // @version      0.1.0
-// @description  记录团内时间线
+// @description  记录团内时间线，使用.progress help获取帮助。
 // @timestamp    1673593368
 // @license      Apache-2
 // @homepageURL  https://github.com/sealdice/javascript
