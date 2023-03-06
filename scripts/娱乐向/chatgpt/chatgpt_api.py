@@ -3,6 +3,18 @@ from revChatGPT.V1 import Chatbot
 import json
 
 app = Flask(__name__)
+chatbot = Chatbot(config={
+    "email": "email",
+    "password": "your password"
+
+    # or "session_token": "..."
+    # cookies on chat.openai.com as "__Secure-next-auth.session-token"
+
+    # or "access_token": "<access_token>"
+    # https://chat.openai.com/api/auth/session
+}
+)
+conversation = chatbot.get_conversations()[0]['id']
 
 
 def getchatgpt(data, chatbot, conversation):
@@ -14,43 +26,29 @@ def getchatgpt(data, chatbot, conversation):
 
 @app.route('/', methods=['POST'])
 def chat():
-    chatbot = None
+    global chatbot, conversation
     while 1:
         text = request.json["text"]
         try:
             if text == "#reset":
                 chatbot.reset_chat()
                 chatbot.clear_conversations()
+                conversation = chatbot.get_conversations()[0]['id']
                 return "Chat session successfully reset."
             else:
-                return getchatgpt(text, chatbot, conversatsion)
+                return getchatgpt(text, chatbot, conversation)
         except:
-            if chatbot is None:
-                chatbot = Chatbot(config={
-                        "email": "email",
-                        "password": "your password"
+            chatbot = Chatbot(config={
+                "email": "email",
+                "password": "your password"
 
-                        # or "session_token": "..."
-                        # cookies on chat.openai.com as "__Secure-next-auth.session-token"
+                # or "session_token": "..."
+                # cookies on chat.openai.com as "__Secure-next-auth.session-token"
 
-                        # or "access_token": "<access_token>"
-                        # https://chat.openai.com/api/auth/session
-                        }
-                )
-                chatbot.clear_conversations()
-            else:
-                conversatsion = chatbot.get_conversations()
-                chatbot = Chatbot(config={
-                    "email": "email",
-                    "password": "your password"
-
-                    # or "session_token": "..."
-                    # cookies on chat.openai.com as "__Secure-next-auth.session-token"
-
-                    # or "access_token": "<access_token>"
-                    # https://chat.openai.com/api/auth/session
-                }
-                )
+                # or "access_token": "<access_token>"
+                # https://chat.openai.com/api/auth/session
+            }
+            )
 
 
 if __name__ == '__main__':
