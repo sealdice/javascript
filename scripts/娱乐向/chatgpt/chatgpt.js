@@ -4,7 +4,7 @@ if (!seal.ext.find("chatgpt")) {
   cmdchatgpt.name = "chatgpt";
   cmdchatgpt.help ="聊天";
   cmdchatgpt.solve = (ctx, msg, cmdArgs) => {
-    let val = cmdArgs.getArgN(1);
+    let val = msg.message;
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
