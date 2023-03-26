@@ -3,7 +3,7 @@
 // @author       Dan Kogai & SzzRain
 // @version      1.0.1
 // @description  base64的编码和解码，使用.btoa 和 .atob 即可使用base64加密和解密
-// @timestamp    1672185584
+// @timestamp    1674577826
 // @license      BSD 3-Clause
 // @homepageURL  https://github.com/sealdice/javascript
 // ==/UserScript==
@@ -303,7 +303,7 @@ Object.keys(gBase64).forEach(function (k) { return gBase64.Base64[k] = gBase64[k
 // import { Base64 } from 'js-base64';
 // 如何建立一个扩展
 if (!seal.ext.find('b64')) {
-    const ext = seal.ext.new('b64', 'SzzRain', '1.0.0');
+    const ext = seal.ext.new('b64', 'SzzRain', '1.0.1');
     // 创建一个命令
     const cmdBtoa = seal.ext.newCmdItemInfo();
     cmdBtoa.name = 'btoa';
@@ -317,7 +317,7 @@ if (!seal.ext.find('b64')) {
                 return ret;
             }
             default: {
-                let text = gBase64.btoa(val)
+                let text = gBase64.encode(val)
                 seal.replyToSender(ctx, msg, text)
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -340,7 +340,7 @@ if (!seal.ext.find('b64')) {
             default: {
                 let text
                 try {
-                    text = gBase64.atob(val)
+                    text = gBase64.decode(val)
                 } catch (e) {
                     text = "解密失败，字符串为空或并非由base64编码"
                 }
