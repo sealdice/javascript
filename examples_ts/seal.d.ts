@@ -234,6 +234,11 @@ declare namespace seal {
     registerRule(rule: CocRuleInfo): boolean;
   }
 
+  export const vars: {
+    intGet(ctx: MsgContext, key: string): [number, boolean];
+    intSet(ctx: MsgContext, key: string, value: number);
+  }
+
   export const gameSystem: {
     /** 添加一个规则模板，需要是JSON文本格式 */
     newTemplate(data: string);
@@ -252,4 +257,7 @@ declare namespace seal {
   export function getCtxProxyFirst(ctx: MsgContext, msg: Message): MsgContext;
   /** 回复发送者(发送者私聊即私聊回复，群内即群内回复) */
   export function replyToSender(ctx: MsgContext, msg: Message, text: string): void;
+
+  /** 格式化 */
+  export function format(ctx: MsgContext, text: string): string;
 }
