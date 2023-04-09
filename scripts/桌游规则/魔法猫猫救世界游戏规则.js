@@ -18,7 +18,7 @@ const thecat={
     "updatedTime": "20230307",
     "templateVer": "1.0",
 
-    "nameTmplate":{
+    "nameTemplate":{
         "game":{
             "template":"{$t玩家_RAW}伤口{伤口}疼痛{疼痛}/{疼痛极限}猫粮丸{猫粮丸}等级{等级}",
             "helpText": "自动设置名片"
