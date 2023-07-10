@@ -12,7 +12,7 @@
 /*
 这里是海豹支持的js脚本范例
 海豹使用的js脚本引擎为goja，对js的支持程度为：
-基本支持es6，能使用promise，但不支持async/await，同时不支持generator(因此不能做async/await的polyfill)
+基本支持es6，能使用promise，支持async/await，不支持generator(因此不能做async/await的polyfill)
 
 特别注意一点是js引擎的整型为32位，请小心溢出问题。
 
