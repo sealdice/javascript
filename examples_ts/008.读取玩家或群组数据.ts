@@ -37,3 +37,5 @@ cmd.solve = (ctx, msg, cmdArgs) => {
   return seal.ext.newCmdExecuteResult(true);
 };
 ext.cmdMap['info'] = cmd;
+
+export { }
