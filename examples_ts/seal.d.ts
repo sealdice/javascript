@@ -57,6 +57,14 @@ declare namespace seal {
     /** 加载个人群内数据 */
     loadPlayerGroupVars(): void
 
+    // 1.2新增
+    /**返回一个空白的 Message 对象，结构与收到消息的 msg 相同 */
+    newMessage() : Message
+    /** 制作一个 ctx, 需要 msg.MessageType 和 msg.Sender.UserId */
+    createTempCtx(endpoint, msg) : MsgContext
+    /** 设定当前 ctx 玩家的自动名片格式  eg: POW:{意志} 海豹会自动将其转变为变量。*/
+    applyPlayerGroupCardByTemplate(ctx, tmpl)
+
   }
 
   export interface ValueMap {
@@ -226,6 +234,23 @@ declare namespace seal {
     /** 是否检查@了别的骰子，如失败不进入solve */
     // checkMentionOthers: boolean;
   }
+  /** 配置项，1.4.4新增 */
+  interface ConfigItem{
+    /**这个配置项的名字 */
+    key :         string
+    /**这个配置项的类型，允许使用 `string` `int` `bool` `option` `template` */      
+    type  :       string
+    /**配置项的默认值 */      
+    defaultValue: any 
+    /**配置项的真实值，可能被用户修改 */
+    value      :  any
+    /**只有 option 配置项能用到，允许的选项 */
+    option     :  any
+    /**配置项是否废弃 */
+    deprecated  : boolean        
+   /**配置项的描述，非必填 */
+    description: string  
+}
 
   interface ExtInfo {
     /** 名字 */
@@ -288,7 +313,7 @@ declare namespace seal {
      * 注册一个扩展
      * @param ext
      */
-    register(ext: ExtInfo): unknown;
+    register(ext: ExtInfo): void;
 
     /**
      * 按名字查找扩展对象
@@ -297,6 +322,97 @@ declare namespace seal {
     find(name: string): ExtInfo;
     /** 创建指令对象 */
     newCmdItemInfo(): CmdItemInfo;
+  /** 用于创建一个新的配置项，返回一个 ConfigItem 对象*/
+  newConfigItem(): ConfigItem;
+  /** 用于注册一个配置项，参数为 ConfigItem 对象 
+   * @param {ConfigItem}configItem 配置项对象
+  */
+  registerConfig(configItem:ConfigItem):void;
+  /**用于获取一个配置项的值，参数为扩展对象和配置项的 key
+   * @param {ExtInfo}ext 扩展对象
+   * @param {string}key 配置项的 key
+  */
+  getConfig(ext:ExtInfo,key:string):void;
+  /**注册一个字符串配置项
+   * @param {ExtInfo}ext 扩展对象
+   * @param {string}key 配置项的 key
+   * @param {string}defaultValue 配置项的默认值
+   * @param {string|null}description 配置项的描述（选填）
+   */
+  registerStringConfig(ext:ExtInfo,key:string, defaultValue:string,description:string|null):void;
+   /**注册一个整形配置项
+   * @param {ExtInfo}ext 扩展对象
+   * @param {string}key 配置项的 key
+   * @param {int}defaultValue 配置项的默认值
+   * @param {string|null}description 配置项的描述（选填）
+   */
+  registerIntConfig(ext:ExtInfo, key:string, defaultValue: number, description:string|null):void;
+  /**注册一个浮点型配置项
+   * @param {ExtInfo}ext 扩展对象
+   * @param {string}key 配置项的 key
+   * @param {int}defaultValue 配置项的默认值
+   * @param {string|null}description 配置项的描述（选填）
+   */
+  registerFloatConfig(ext:ExtInfo, key:string,defaultValue: number, description:string|null):void;
+  /**注册一个布尔型配置项
+   * @param {ExtInfo}ext 扩展对象
+   * @param {string}key 配置项的 key
+   * @param {boolean}defaultValue 配置项的默认值
+   * @param {string|null}description 配置项的描述（选填）
+  */
+  registerBoolConfig(ext:ExtInfo, key:string,defaultValue: boolean, description:string|null):void;
+  /**注册一个模板配置项，其意义为可以理解为数组 
+   * @param {ExtInfo}ext 扩展对象
+   * @param {string}key 配置项的 key
+   * @param {string}defaultValue 配置项的默认值
+   * @param {string|null}description 配置项的描述（选填）
+  */
+  registerTemplateConfig(ext:ExtInfo, key:string,defaultValue: [], description:string|null):void;
+  /**注册一个选项配置项，值只能在指定的数组里 
+   * @param {ExtInfo}ext 扩展对象
+   * @param {string}key 配置项的 key
+   * @param {string}defaultValue 配置项的默认值，值必须在 value 中
+   * @param value 配置项的值
+   * @param {string|null}description 配置项的描述（选填）
+  */
+  registerOptionConfig(ext:ExtInfo, key:string,defaultValue: any,value:[], description:string|null,options:any[]):void;
+  /** 取配置项方法，从 key 配置中返回值
+   * @param {ExtInfo}ext 扩展对象 
+   * @param key 配置项的 key
+   * @returns 字符串
+   */
+  getStringConfig(ext:ExtInfo,key:string):string;
+  /** 取配置项方法，从 key 配置中返回值
+   * @param {ExtInfo}ext 扩展对象
+   * @param key 配置项的 key
+   * @returns 整数
+   */
+  getIntConfig(ext:ExtInfo,key:string):number;
+  /** 取配置项方法，从 key 配置中返回值
+   * @param {ExtInfo}ext 扩展对象
+   * @param key 配置项的 key
+   * @returns 浮点数
+   */
+  getFloatConfig(ext:ExtInfo,key:string):number;
+  /** 取配置项方法，从 key 配置中返回值
+   * @param {ExtInfo}ext 扩展对象
+   * @param key 配置项的 key
+   * @returns 布尔值
+   */
+  getBoolConfig(ext:ExtInfo,key:string):boolean;
+  /** 取配置项方法，从 key 配置中返回值
+   * @param {ExtInfo}ext 扩展对象
+   * @param key 配置项的 key
+   * @returns 任意
+   */
+  getTemplateConfig(ext:ExtInfo,key:string):any;
+  /** 取配置项方法，从 key 配置中返回值
+   * @param {ExtInfo}ext 扩展对象
+   * @param key 配置项的 key
+   * @returns 选项
+   */
+  getOptionConfig(ext:ExtInfo,key:string):any;
+
   }
 
   interface CocRuleInfo {
@@ -324,6 +440,29 @@ declare namespace seal {
     /** 大成功数值 */
     criticalSuccessValue: number;
   }
+  /**黑名单操作相关 */
+  export const ban :{
+    /** 添加黑名单 
+     * @param ctx 上下文对象
+     * @param id 用户id
+     * @param place 地点
+     * @param reason 原因
+    */
+    addBan (ctx:MsgContext, id:number, place:string, reason:string):void
+    /** 添加信任
+     * @param ctx 上下文对象
+     * @param id 用户id
+     * @param place 地点
+     * @param reason 原因
+     */
+    addTrust(ctx:MsgContext, id:number, place:string, reason:string):void
+    /** 移除相关权限 */
+    remove(ctx:MsgContext, id:number):void
+    /**获取信任/黑名单列表 */
+    getlist():list
+    /**获取用户的信任信息 */
+    getUser(id)
+  }
 
   export const coc: {
     newRule(): CocRuleInfo;
@@ -349,6 +488,8 @@ declare namespace seal {
   export function createTempCtx(ep: EndPointInfo, msg: Message): MsgContext;
   /** 应用名片模板，返回值为格式化完成的名字。此时已经设置好名片(如有权限) */
   export function applyPlayerGroupCardByTemplate(ctx: MsgContext, tmpl: string): string;
+  /** 将 base64 值存储到本地临时文件并允许被海豹调用 */
+  export function base64ToImage(base64: string): string;
 
   /** 获取/修改 VM 变量 ，如 `$t`、`$g` */
   export const vars: {
