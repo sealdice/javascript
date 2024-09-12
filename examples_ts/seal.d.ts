@@ -39,7 +39,7 @@ declare namespace seal {
     /** 清空当前群角色卡变量 返回被清空的变量数量 */
     chVarsClear(): number
     /** 获取当前角色 ValueMap */
-    chVarsGet(): [ValueMap,boolean]
+    chVarsGet(): [ValueMap, boolean]
     /** 获取当前角色变量数量，底层为 `ValueMap.len()` */
     chVarsNumGet(): number
     /** 更新角色卡操作时间 */
@@ -71,7 +71,7 @@ declare namespace seal {
     /** 迭代 */
     next(): [any, any, boolean]
     /** 遍历 参数不能传入 `()=>null`，但可以传入 `()=>{}` 或者 `function(){}` */
-    iterate(fun: (k,v)=>void): void
+    iterate(fun: (k, v) => void): void
     // 加锁
     lock(): void
     // 解锁
@@ -272,6 +272,79 @@ declare namespace seal {
     showHelp: boolean;
   }
 
+  type BanRankType = number
+  /*
+    禁止等级
+    BanRankBanned = -30 
+    警告等级
+    BanRankWarn = -10
+    常规等级
+    BanRankNomal = 0
+    信任等级
+    BanRankTrust = 30
+  */
+  interface BanListInfoItem {
+    // 可能是用户id
+    id: string
+    // 名称
+    name: string
+    // 怒气值
+    score: number
+    // 0 没事 -10警告 -30禁止 30信任
+    rank: BanRankType
+    // 事发时间
+    times: number[]
+    // 拉黑原因
+    reasons: string[]
+    // 发生地点
+    places: string[]
+    // 拉入黑名单时刻时间戳
+    bantime: number
+  }
+
+  export const ban: {
+    /**
+     * 将用户加到黑名单
+     * @param ctx 上下文对象
+     * @param id 用户id
+     * @param place 处罚原因发生位置
+     * @param reason 处罚原因
+     */
+    addBan(ctx: MsgContext, id: string, place: string, reason: string): void;
+
+    /**
+     * 将用户加到白名单
+     * @param ctx 上下文对象
+     * @param id 用户id
+     * @param place 奖励原因发生位置
+     * @param reason 奖励原因
+     */
+    addTrust(ctx: MsgContext, id: string, place: string, reason: string): void;
+
+    /**
+     * 将用户从名单中删除
+     * @param ctx 上下文对象
+     * @param id 用户id
+     */
+    remove(ctx: MsgContext, id: string): void;
+
+    // 获取名单全部用户
+    getList(): BanListInfoItem[];
+
+    // 查询指定用户的（拉黑）历史数据
+    getUser(id: string): BanListInfoItem;
+  }
+
+  interface ConfigItem {
+    key: string,
+    type: string,
+    defaultValue: any,
+    value: any,
+    option: any,
+    deprecated: boolean,
+    description: string
+  }
+  type TimeOutTaskType = 'cron'|'daily'
   export const ext: {
     /**
      * 新建一个扩展
@@ -297,6 +370,128 @@ declare namespace seal {
     find(name: string): ExtInfo;
     /** 创建指令对象 */
     newCmdItemInfo(): CmdItemInfo;
+    /**
+     * 注册一个字符串类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerStringConfig(ext: ExtInfo,key: string,defaultValue: string,desc?: string): unknown;
+    /**
+     * 注册一个整型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerIntConfig(ext: ExtInfo,key: string,defaultValue: number,desc?: string): unknown;
+    /**
+     * 注册一个布尔类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerBoolConfig(ext: ExtInfo,key: string,defaultValue: boolean,desc?: string): unknown;
+    /**
+     * 注册一个浮点数类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerFloatConfig(ext: ExtInfo,key: string,defaultValue: number,desc?: string): unknown;
+    /**
+     * 注册一个template类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerTemplateConfig(ext: ExtInfo,key: string,defaultValue: string[],desc?: string): unknown;
+    /**
+     * 注册一个option类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项默认值
+     * @param option 可选项
+     * @param desc 描述
+     */
+    registerOptionConfig(ext: ExtInfo,key: string,defaultValue: string,option: string[],desc?: string): unknown;
+    /**
+     * 创建一个新的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    newConfigItem(ext: ExtInfo,key: string,defaultValue: any,desc: string):ConfigItem;
+    /**
+     * 注册配置
+     * @param ext 扩展对象 
+     * @param configs 配置项对象
+     */
+    registerConfig(ext: ExtInfo,...configs:ConfigItem[]):unknown;
+    /**
+     * 获取指定名称的配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 获取指定名称的字符串类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getStringConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 获取指定名称的整型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getIntConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 获取指定名称的布尔类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getBoolConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 获取指定名称的浮点数类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getFloatConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 获取指定名称的template类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getTemplateConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 获取指定名称的option类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getOptionConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 卸载对应名称的配置项
+     * @param ext 扩展对象
+     * @param keys 配置项名称
+     */
+    unregisterConfig(ext: ExtInfo,...keys: string[]):void;
+
+    /**
+     * 注册定时任务
+     * @param ext 扩展对象
+     * @param taskType cron格式/每日时钟格式
+     * @param value 5位cron表达式/数字时钟 例如 * * * * *或者8:30
+     * @param fn 定时任务内容
+     * @param key 定时任务名称
+     * @param desc 定时任务描述
+     */
+    registerTask(ext: ExtInfo, taskType: TimeOutTaskType, value: string, fn: Function, key?: string, desc?: string): void;
   }
 
   interface CocRuleInfo {
@@ -350,6 +545,83 @@ declare namespace seal {
   /** 应用名片模板，返回值为格式化完成的名字。此时已经设置好名片(如有权限) */
   export function applyPlayerGroupCardByTemplate(ctx: MsgContext, tmpl: string): string;
 
+  /**
+   * 禁言
+   * @param ctx 上下文
+   * @param groupID QQ群ID
+   * @param userID 禁言对象ID
+   * @param duration 禁言时间
+   */
+  export function memberBan(ctx: MsgContext, groupID: string, userID: string, duration: number): void;
+  /**
+   * 踢人
+   * @param ctx 上下文
+   * @param groupID QQ群ID
+   * @param userID 踢出对象ID
+   */
+  export function memberKick(ctx: MsgContext, groupID: string, userID: string): void;
+  /**
+   * 执行海豹dicescript
+   * @param ctx 上下文
+   * @param s 指令文本
+   */
+  export function formatTmpl(ctx: MsgContext, s: string): string;
+  /**
+   * 创建at列表里第一个用户的代骰上下文
+   * @param ctx 上下文
+   * @param cmdArgs 指令参数
+   */
+  export function getCtxProxyFirst(ctx: MsgContext, cmdArgs: CmdArgs): MsgContext;
+  /**
+   * 通过通信端点对象创建上下文，与getEndPoints共用
+   * @param ep 通信端点对象
+   * @param msg 消息对象
+   */
+  export function createTempCtx(ep: EndPointInfo, msg: Message): MsgContext;
+  /**
+   * 
+   * @param ctx 上下文
+   * @param tmpl 模板文本
+   */
+  export function applyPlayerGroupCardByTemplate(ctx: MsgContext, tmpl: string): string;
+  /**
+   * 创建at列表里指定用户的代骰上下文
+   * @param ctx 上下文
+   * @param cmdArgs 指令参数
+   * @param pos at列表的序数
+   */
+  export function getCtxProxyAtPos(ctx: MsgContext, cmdArgs: CmdArgs, pos: number): MsgContext;
+
+  type VersionDetailsType = {
+    // 
+    versionCode: number
+    // 版本号+日期 如 1.4.6+20240810
+    version: string
+    // 版本号 如 1.4.6
+    versionSimple: string
+
+    versionDetail: {
+
+      major:         number
+
+      minor:         number
+
+      patch:         number
+
+      prerelease:    string
+      // 创建日期 如 20240810
+      buildMetaData: string
+    }
+  }
+  /** 获取版本信息  */
+  export function getVersion(): VersionDetailsType;
+  /** 获取骰娘的EndPoints   */
+  export function getEndPoints(): EndPointInfo[]
+
+  export function setPlayerGroupCard(ctx: MsgContext, tmpl: string): string
+  // 通过base64返回图像临时地址
+  export function base64ToImage(base64: string): string
+
   /** 获取/修改 VM 变量 ，如 `$t`、`$g` */
   export const vars: {
     /** VM 中存在 key 且类型正确 返回 `[number,true]` ，否则返回 `[0,false]` */
@@ -364,9 +636,9 @@ declare namespace seal {
 
   export const gameSystem: {
     /** 添加一个规则模板，需要是JSON文本格式 */
-    newTemplate(data: string);
+    newTemplate(data: string): unknown;
     /** 添加一个规则模板，需要是YAML文本格式 */
-    newTemplateByYaml(data: string);
+    newTemplateByYaml(data: string): unknown;
   }
 
 
