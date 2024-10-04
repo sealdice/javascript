@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         每日新闻与历史上的今天与摸鱼人日历
 // @author       陆天行
-// @version      1.0.0
-// @description  “.今日新闻”返回每日新闻，“.历史上的今天”返回历史上的今天，“.摸鱼人日历”返回历史上的今天，本脚本修改自sealdice官方脚本仓库托管星尘的每日新闻与历史上的今天，本人更换了可用的API并添加了摸鱼人日历功能
-// @timestamp    1727369826
+// @version      1.0.1
+// @description  “.今日新闻”返回每日新闻，“.历史上的今天”返回历史上的今天，“.摸鱼人日历”返回摸鱼人日历，本脚本修改自sealdice官方脚本仓库托管星尘的每日新闻与历史上的今天，本人更换了可用的API并添加了摸鱼人日历功能
+// @timestamp    1727873437
 // @license      Apache-2
 // @homepageURL  https://github.com/sealdice/javascript
 // ==/UserScript==
