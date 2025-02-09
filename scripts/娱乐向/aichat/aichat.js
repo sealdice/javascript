@@ -66,7 +66,7 @@ if (!seal.ext.find('aichat')) {
                     content: val,
                 }
                 seal.replyToSender(ctx, msg, `${atSender}${ctx.endPoint.nickname}正在思考中...`);
-                callAI('ai', dict, (result) => {
+                callAI('ask', dict, (result) => {
                     seal.replyToSender(ctx, msg, atSender+result.msg);
                 });
                 return seal.ext.newCmdExecuteResult(true);
@@ -101,7 +101,7 @@ if (!seal.ext.find('aichat')) {
                     content: val,
                 }
                 seal.replyToSender(ctx, msg, `${atSender}${ctx.endPoint.nickname}正在思考中...`);
-                callAI('aichat', dict, (result) => {
+                callAI('chat', dict, (result) => {
                     seal.replyToSender(ctx, msg, atSender+result.msg);
                 });
                 return seal.ext.newCmdExecuteResult(true);
