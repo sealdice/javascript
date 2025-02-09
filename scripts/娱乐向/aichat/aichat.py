@@ -99,7 +99,12 @@ def chat():
                 }
             )
             response = client.chat.completions.create(
-                model=model_id, messages=session[session_id], timeout=60
+                model=model_id,
+                messages=session[session_id],
+                max_tokens=max_tokens,
+                temperature=1.0,
+                stream=False,
+                timeout=timeout
             )
         except Exception as error:
             if "429" in str(error):
