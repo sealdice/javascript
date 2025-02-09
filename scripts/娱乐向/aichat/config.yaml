@@ -1,0 +1,6 @@
+oneapi_key: ""  # （必填）OpenAI或者是支持OneAPI的大模型中转服务商提供的KEY
+oneapi_url: https://api.deepseek.com  # （可选）大模型中转服务商提供的中转地址，使用OpenAI官方服务不需要填写
+oneapi_model: deepseek-chat # （可选）使用的语言大模型，使用识图功能请填写合适的大模型名称
+max_tokens: 150 # （可选）生成的最大tokens数量
+max_ctx: 15 # （可选）上下文的最大轮数，超过该轮数会删除最旧的对话，设置为0表示不限制
+timeout: 60 # （可选）请求AI模型的超时时间
