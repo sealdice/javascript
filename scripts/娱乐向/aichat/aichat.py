@@ -192,5 +192,5 @@ def aiclear():
 if __name__ == '__main__':
     from gunicorn.app.wsgiapp import run
     import sys
-    sys.argv = ['gunicorn', '-b', '127.0.0.1:13211', 'aichat:app']
+    sys.argv = ['gunicorn', '-b', '127.0.0.1:13211', '--timeout', str(timeout), 'aichat:app']
     run()
