@@ -1,6 +1,7 @@
 declare namespace seal {
   /** 信息上下文 */
   export interface MsgContext {
+    endPoint: EndPointInfo;
     /** 当前群信息 */
     group: GroupInfo;
     /** 当前群的玩家数据 */
@@ -15,48 +16,6 @@ declare namespace seal {
     delegateText: string
     /** 对通知列表发送消息 */
     notice(text: string): void
-
-    // 谨慎使用角色卡相关 api ，有可能写坏数据库
-
-    /** 绑定角色卡到当前群 */
-    chBindCur(name: string)
-    /* 获取当前群绑定角色 返回名字或者空字符串*/
-    chBindCurGet(): string
-    /** 获取一个正在绑定状态的卡，可用于该卡片是否绑卡检测 */
-    chBindGet(name: string): ValueMap
-    /** 返回当前卡绑定的群列表 */
-    chBindGetList(): string[]
-    /** 解除某个角色的绑定 返回绑定过的群列表 */
-    chUnbind(name: string): string[]
-    /** 解除绑定 成功返回 `[角色名,true]`，失败返回 `["",false]`  */
-    chUnbindCur(name: string): [string, boolean]
-
-
-    /* 判断角色是否存在 */
-    chExists(name: string): boolean
-    /** 新建角色 成功 true；存在同名角色 false */
-    chNew(name: string): boolean
-    /** 清空当前群角色卡变量 返回被清空的变量数量 */
-    chVarsClear(): number
-    /** 获取当前角色 ValueMap */
-    chVarsGet(): [ValueMap,boolean]
-    /** 获取当前角色变量数量，底层为 `ValueMap.len()` */
-    chVarsNumGet(): number
-    /** 更新角色卡操作时间 */
-    chVarsUpdateTime(): void
-
-    // 这些接口不推荐使用，太麻烦了
-    /**  获取角色数据 成功返回 ValueMap ，失败返回 null */
-    chGet(name: string): ValueMap | null
-    /** 加载角色，成功返回 ValueMap ，失败返回 null */
-    chLoad(name: string): ValueMap | null
-    /** 加载个人群内数据 */
-    loadGroupVars(g: GroupInfo, p: GroupPlayerInfo): void
-    /** 加载个人全局数据 */
-    loadPlayerGlobalVars(): void
-    /** 加载个人群内数据 */
-    loadPlayerGroupVars(): void
-
   }
 
   export interface ValueMap {
@@ -71,7 +30,7 @@ declare namespace seal {
     /** 迭代 */
     next(): [any, any, boolean]
     /** 遍历 参数不能传入 `()=>null`，但可以传入 `()=>{}` 或者 `function(){}` */
-    iterate(fun: (k,v)=>void): void
+    iterate(fun: (k, v) => void): void
     // 加锁
     lock(): void
     // 解锁
@@ -125,11 +84,22 @@ declare namespace seal {
     messageType: 'group' | 'private';
     /** 群ID */
     groupId: string;
+    /** 服务器ID */
+    guildId: string;
     /** 发送者信息 */
     sender: Sender;
     /** 原始ID，用于撤回等情况 */
     rawId: string | number;
   }
+
+  /** 创建一个 Message 对象 */
+  export function newMessage(): Message;
+
+  /** 创建一个 ctx 对象 */
+  export function createTempCtx(
+    endPoint: EndPointInfo,
+    msg: Message
+  ): MsgContext;
 
   /** 发送者信息 */
   export interface Sender {
@@ -178,6 +148,8 @@ declare namespace seal {
     command: string;
     /** 指令参数，如“.ra 力量 测试”时，参数1为“力量”，参数2为“测试” */
     args: string[];
+    /** 关键字参数 */
+    kwargs: Kwarg[];
     /** 当前被at的有哪些 */
     at: AtInfo[];
     /** 参数的原始文本 */
@@ -201,7 +173,7 @@ declare namespace seal {
     /** 吃掉前缀并去除复数空格 `set xxx  xxx` => `xxx xxx`，返回修改后的字符串和是否修改成功的布尔值  */
     eatPrefixWith(...s: string[]): [string, boolean]
     /** 将第 n 个参数及之后参数用空格拼接起来; 如指令 `send to qq x1 x2`,n=3返回 `x1 x2` */
-    getRestArgsFrom(n: number): number
+    getRestArgsFrom(n: number): string
     /** 检查第N项参数是否为某个字符串，n从1开始，若没有第n项参数也视为失败 */
     isArgEqual(n: number, ...s: string[]): boolean
   }
@@ -272,6 +244,82 @@ declare namespace seal {
     showHelp: boolean;
   }
 
+  type BanRankType = number
+  /*
+    禁止等级
+    BanRankBanned = -30
+    警告等级
+    BanRankWarn = -10
+    常规等级
+    BanRankNomal = 0
+    信任等级
+    BanRankTrust = 30
+  */
+  interface BanListInfoItem {
+    /** 对象 ID */
+    id: string;
+    /** 对象名称 */
+    name: string;
+    /** 怒气值。*/
+    score: number;
+    /** 0 正常，-10 警告，-30 禁止，30 信任 */
+    rank: number;
+    /** 历史记录时间戳 */
+    times: number[];
+    /** 拉黑原因记录 */
+    reasons: string[];
+    /** 事发会话记录 */
+    places: string[];
+    /** 首次记录时间 */
+    banTime: number;
+  }
+  /** 黑名单操作 */
+  export const ban: {
+    /**
+     * 拉黑指定 ID
+     * @param ctx 上下文
+     * @param id 黑名单用户或群组 ID
+     * @param place 事发会话 ID
+     * @param reason 拉黑原因
+     */
+    addBan(ctx: MsgContext, id: string, place: string, reason: string): void;
+
+    /**
+     * 信任指定 ID
+     * @param ctx 上下文
+     * @param id 信任用户或群组 ID
+     * @param place 事发会话 ID
+     * @param reason 信任原因
+     */
+    addTrust(ctx: MsgContext, id: string, place: string, reason: string): void;
+
+    /**
+     * 将用户从名单中删除
+     * @param ctx 上下文对象
+     * @param id 要移除的用户 ID
+     */
+    remove(ctx: MsgContext, id: string): void;
+
+    /** 获取名单全部用户 */
+    getList(): BanListInfoItem[];
+
+    /**
+     * 获取指定 ID 的黑名单记录。返回值可能为空。
+     * @param id 用户群组
+     */
+    getUser(id: string): BanListInfoItem;
+  }
+
+  interface ConfigItem {
+    key: string,
+    type: string,
+    defaultValue: any,
+    value: any,
+    option: any,
+    deprecated: boolean,
+    description: string
+  }
+  type TimeOutTaskType = 'cron'|'daily'
   export const ext: {
     /**
      * 新建一个扩展
@@ -297,6 +345,128 @@ declare namespace seal {
     find(name: string): ExtInfo;
     /** 创建指令对象 */
     newCmdItemInfo(): CmdItemInfo;
+    /**
+     * 注册一个字符串类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerStringConfig(ext: ExtInfo,key: string,defaultValue: string,desc?: string): void;
+    /**
+     * 注册一个整型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerIntConfig(ext: ExtInfo,key: string,defaultValue: number,desc?: string): void;
+    /**
+     * 注册一个布尔类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerBoolConfig(ext: ExtInfo,key: string,defaultValue: boolean,desc?: string): void;
+    /**
+     * 注册一个浮点数类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerFloatConfig(ext: ExtInfo,key: string,defaultValue: number,desc?: string): void;
+    /**
+     * 注册一个template类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    registerTemplateConfig(ext: ExtInfo,key: string,defaultValue: string[],desc?: string): void;
+    /**
+     * 注册一个option类型的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项默认值
+     * @param option 可选项
+     * @param desc 描述
+     */
+    registerOptionConfig(ext: ExtInfo,key: string,defaultValue: string,option: string[],desc?: string): void;
+    /**
+     * 创建一个新的配置项
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     * @param defaultValue 配置项值
+     * @param desc 描述
+     */
+    newConfigItem(ext: ExtInfo,key: string,defaultValue: any,desc: string): ConfigItem;
+    /**
+     * 注册配置
+     * @param ext 扩展对象
+     * @param configs 配置项对象
+     */
+    registerConfig(ext: ExtInfo,...configs:ConfigItem[]): void;
+    /**
+     * 获取指定名称的配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getConfig(ext: ExtInfo,key: string): ConfigItem;
+    /**
+     * 获取指定名称的字符串类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getStringConfig(ext: ExtInfo,key: string): string;
+    /**
+     * 获取指定名称的整型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getIntConfig(ext: ExtInfo,key: string): number;
+    /**
+     * 获取指定名称的布尔类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getBoolConfig(ext: ExtInfo,key: string): boolean;
+    /**
+     * 获取指定名称的浮点数类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getFloatConfig(ext: ExtInfo,key: string): number;
+    /**
+     * 获取指定名称的template类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getTemplateConfig(ext: ExtInfo,key: string): string[];
+    /**
+     * 获取指定名称的option类型配置项对象
+     * @param ext 扩展对象
+     * @param key 配置项名称
+     */
+    getOptionConfig(ext: ExtInfo,key: string): string;
+    /**
+     * 卸载对应名称的配置项
+     * @param ext 扩展对象
+     * @param keys 配置项名称
+     */
+    unregisterConfig(ext: ExtInfo,...keys: string[]):void;
+
+    /**
+     * 注册定时任务
+     * @param ext 扩展对象
+     * @param taskType cron格式/每日时钟格式
+     * @param value 5位cron表达式/数字时钟 例如 * * * * *或者8:30
+     * @param fn 定时任务内容
+     * @param key 定时任务名称
+     * @param desc 定时任务描述
+     */
+    registerTask(ext: ExtInfo, taskType: TimeOutTaskType, value: string, fn: Function, key?: string, desc?: string): void;
   }
 
   interface CocRuleInfo {
@@ -331,6 +501,8 @@ declare namespace seal {
     registerRule(rule: CocRuleInfo): boolean;
   }
 
+  /** 代骰模式下，获取被代理人信息 */
+  export function getCtxProxyFirst(ctx: MsgContext, cmdArgs: CmdArgs): MsgContext;
   /** 回复发送者(发送者私聊即私聊回复，群内即群内回复) */
   export function replyToSender(ctx: MsgContext, msg: Message, text: string): void;
   /** 回复发送者(私聊回复，典型应用场景如暗骰) */
@@ -350,6 +522,83 @@ declare namespace seal {
   /** 应用名片模板，返回值为格式化完成的名字。此时已经设置好名片(如有权限) */
   export function applyPlayerGroupCardByTemplate(ctx: MsgContext, tmpl: string): string;
 
+  /**
+   * 禁言
+   * @param ctx 上下文
+   * @param groupID QQ群ID
+   * @param userID 禁言对象ID
+   * @param duration 禁言时间
+   */
+  export function memberBan(ctx: MsgContext, groupID: string, userID: string, duration: number): void;
+  /**
+   * 踢人
+   * @param ctx 上下文
+   * @param groupID QQ群ID
+   * @param userID 踢出对象ID
+   */
+  export function memberKick(ctx: MsgContext, groupID: string, userID: string): void;
+  /**
+   * 执行海豹dicescript
+   * @param ctx 上下文
+   * @param s 指令文本
+   */
+  export function formatTmpl(ctx: MsgContext, s: string): string;
+  /**
+   * 创建at列表里第一个用户的代骰上下文
+   * @param ctx 上下文
+   * @param cmdArgs 指令参数
+   */
+  export function getCtxProxyFirst(ctx: MsgContext, cmdArgs: CmdArgs): MsgContext;
+  /**
+   * 通过通信端点对象创建上下文，与getEndPoints共用
+   * @param ep 通信端点对象
+   * @param msg 消息对象
+   */
+  export function createTempCtx(ep: EndPointInfo, msg: Message): MsgContext;
+  /**
+   *
+   * @param ctx 上下文
+   * @param tmpl 模板文本
+   */
+  export function applyPlayerGroupCardByTemplate(ctx: MsgContext, tmpl: string): string;
+  /**
+   * 创建at列表里指定用户的代骰上下文
+   * @param ctx 上下文
+   * @param cmdArgs 指令参数
+   * @param pos at列表的序数
+   */
+  export function getCtxProxyAtPos(ctx: MsgContext, cmdArgs: CmdArgs, pos: number): MsgContext;
+
+  type VersionDetailsType = {
+    // 内部版本号，新版本的版本号永远比旧版本的大
+    versionCode: number
+    // 版本号+日期 如 1.4.6+20240810
+    version: string
+    // 版本号 如 1.4.6
+    versionSimple: string
+
+    versionDetail: {
+
+      major:         number
+
+      minor:         number
+
+      patch:         number
+
+      prerelease:    string
+      // 创建日期 如 20240810
+      buildMetaData: string
+    }
+  }
+  /** 获取版本信息  */
+  export function getVersion(): VersionDetailsType;
+  /** 获取骰娘的EndPoints   */
+  export function getEndPoints(): EndPointInfo[]
+
+  export function setPlayerGroupCard(ctx: MsgContext, tmpl: string): string
+  // 通过base64返回图像临时地址
+  export function base64ToImage(base64: string): string
+
   /** 获取/修改 VM 变量 ，如 `$t`、`$g` */
   export const vars: {
     /** VM 中存在 key 且类型正确 返回 `[number,true]` ，否则返回 `[0,false]` */
@@ -364,9 +613,9 @@ declare namespace seal {
 
   export const gameSystem: {
     /** 添加一个规则模板，需要是JSON文本格式 */
-    newTemplate(data: string);
+    newTemplate(data: string): unknown;
     /** 添加一个规则模板，需要是YAML文本格式 */
-    newTemplateByYaml(data: string);
+    newTemplateByYaml(data: string): unknown;
   }
 
 
