@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         每日新闻与历史上的今天与摸鱼人日历
 // @author       陆天行
-// @version      1.0.2
+// @version      1.0.3
 // @description  “.今日新闻”返回每日新闻，“.历史上的今天”返回历史上的今天，“.摸鱼人日历”返回摸鱼人日历，本脚本修改自sealdice官方脚本仓库托管星尘的每日新闻与历史上的今天，本人更换了可用的API并添加了摸鱼人日历功能
-// @timestamp    1728716479
+// @timestamp    1738082743
 // @license      Apache-2
 // @homepageURL  https://github.com/sealdice/javascript
 // ==/UserScript==
 if (!seal.ext.find("DailyInfoByLTX")) {
-    const ext = seal.ext.new("DailyInfoByLTX", "陆天行", "1.0.2");
+    const ext = seal.ext.new("DailyInfoByLTX", "陆天行", "1.0.3");
     const cmdNewsToday = seal.ext.newCmdItemInfo();
     cmdNewsToday.name = "今日新闻";
     cmdNewsToday.help = "可用.今日新闻 调用,API爆炸请发邮件给ci_tfee_lutianxing@163.com";
@@ -21,7 +21,7 @@ if (!seal.ext.find("DailyInfoByLTX")) {
           return ret;
         }
         default: {
-          let url = "https://api.jun.la/60s.php?format=imgapi";
+          let url = "https://api.03c3.cn/api/zb?type=jsonImg";
           // 发送 GET 请求
           fetch(url)
             .then((response) => {
@@ -37,7 +37,8 @@ if (!seal.ext.find("DailyInfoByLTX")) {
               //返回数据转换为json对象以可以访问
               let imgJson = JSON.parse(data);
               // 使用[""]方式访问json对象中的tp项 
-              let imgUrl = imgJson["imageBaidu"];
+              let index = imgJson["data"];
+              let imgUrl = index["imageurl"];
               // 拼装返回的图片消息
               let messageRet = "[CQ:image,file="+imgUrl+",cache=0]";
               // 发出去
@@ -67,7 +68,7 @@ if (!seal.ext.find("DailyInfoByLTX")) {
           seal.replyToSender(
             ctx,
             msg,
-            `[CQ:image,file=https://xiaoapi.cn/API/lssdjt_pic.php]`
+            `[CQ:image,file=https://xiaoapi.cn/API/lssdjt_pic.php,cache=0]`
           );
           return seal.ext.newCmdExecuteResult(true);
         }
