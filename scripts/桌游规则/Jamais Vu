@@ -1,0 +1,215 @@
+// ==UserScript== 
+// @name         Jamais Vu规则
+
+// @author       Artemis 
+// @version      1.0.3 
+// @description  Jamais Vu规则实现，包含人物卡模板和检定指令
+
+// 2025-04-15
+// @diceRequireVer 1.2.0 
+// @license      MIT 
+// ==/UserScript== 
+
+const ruleText = `《Jamais Vu规则》
+
+
+1. 基本属性
+
+- 生命值上限：基础健康值
+- 士气值上限：基础意志力
+- 技能系统包含24项独特能力
+
+2. 检定规则
+
+- 使用2d6进行检定
+- 出目为2时自动失败
+- 出目为12时自动成功
+- 其他情况：结果 = 骰值和 + 技能等级 + 修改值`;
+
+const template = { 
+  name: 'jv', 
+  fullName: 'Jamais Vu规则系统',
+
+  authors: ['Artemis'], 
+  version: '1.0.0', 
+  templateVer: '1.0', 
+  
+  // setConfig修改 
+  setConfig: { 
+    diceSides: 6, 
+    enableTip: '已切换至Jamais Vu规则系统，并自动开启相关扩展',
+    keys: ['jv', '旧事如新'],
+
+    relatedExt: ['jv', 'coc7'] 
+  },
+
+  // nameTemplate修改
+  nameTemplate: {
+    jv: {
+      template: '{$t玩家_RAW}  hp{生命值}/{生命值上限} mor{士气值}/{士气值上限}',
+      helpText: '自动设置Jamais Vu角色名片',
+    },
+  },
+
+  attrConfig: {
+    top: ['生命值', '士气值', '生命值上限', '士气值上限'],
+    sortBy: 'name',
+    ignores: [],
+    showAs: {
+      生命值: '{生命值}/{生命值上限}',
+      士气值: '{士气值}/{士气值上限}'
+    },
+    setter: null,
+  },
+  
+  // 配套属性系统
+  defaults: {},
+  defaultsComputed: {
+    生命值上限: '健康',
+    士气值上限: '意志力'
+  },
+  alias: {
+    生命值: ['hp'],
+    生命值上限: ['hpmax'],
+    士气值: ['mor'],
+    士气值上限: ['mormax'],
+    健康: ['vit'],
+    意志力: ['wil']
+  },
+  
+  textMap: {
+    'jv-test': {
+      设置测试_成功: [['初始化完成', 1]],
+    },
+  },
+  textMapHelpInfo: null,
+};
+
+try {
+  seal.gameSystem.newTemplate(JSON.stringify(template));
+} catch (e) {
+  console.log(e);
+}
+
+// 创建扩展
+let ext = seal.ext.find('jv');
+if (!ext) {
+  ext = seal.ext.new('jv', 'Artemis', '1.0.0');
+  seal.ext.register(ext);
+}
+
+// 新增规则查询指令
+const cmdJV = seal.ext.newCmdItemInfo();
+cmdJV.name = 'jv';
+cmdJV.help = '显示规则手册'; // 简化帮助提示
+cmdJV.solve = (ctx, msg) => { // 不需要处理参数
+  seal.replyToSender(ctx, msg, ruleText);
+  return seal.ext.newCmdExecuteResult(true);
+};
+ext.cmdMap['jv'] = cmdJV;
+ext.cmdMap['jamaisvu'] = cmdJV; // 添加英文别名
+
+
+const cmdRA = seal.ext.newCmdItemInfo();
+cmdRA.name = 'ra';
+cmdRA.help = `.ra[技能名]±[修正值] // 进行技能检定\n示例：.ra逻辑思维+3 或 .ra平心静气-5`;
+
+const skillList = [
+  '标新立异', '逻辑思维', '争强好胜', '内陆帝国', '食髓知味',
+  '坚忍不拔', '从容自若', '五感发达', '故弄玄虚', '能说会道',
+  '通情达理', '循循善诱', '钢筋铁骨', '强身健体', '眼明手巧',
+  '反应速度', '博学多闻', '见微知著', '同舟共济', '平心静气',
+  '疑神疑鬼', '天人感应', '能工巧匠', '鬼祟玲珑' 
+];
+
+cmdRA.solve = (ctx, msg, cmdArgs) => {
+  const arg = cmdArgs.getArgN(1);
+  const pattern = /([\u4e00-\u9fa5]+)([+-]\d+)?/;
+  const match = arg.match(pattern);
+
+  if (!match) {
+    seal.replyToSender(ctx, msg, '指令格式错误，正确格式：.ra技能名±修正值');
+    return seal.ext.newCmdExecuteResult(true);
+  }  
+
+  const [, skillName, mod] = match;
+  const modifier = parseInt(mod) || 0;
+
+  if (!skillList.includes(skillName)) {  
+    seal.replyToSender(ctx, msg, `无效技能名称，可用技能：${skillList.join('、')}`);
+    return seal.ext.newCmdExecuteResult(true);
+  }
+
+  // 获取技能值
+  const skillValue = seal.vars.intGet(ctx, skillName)[0] || 0;
+  
+  // 掷骰
+  const roll1 = Math.floor(Math.random() * 6) + 1;
+  const roll2 = Math.floor(Math.random() * 6) + 1;
+  const totalRoll = roll1 + roll2;
+
+  let resultText = `检定结果：${roll1} + ${roll2} = ${totalRoll}`;
+  
+  if (totalRoll === 2) {
+    resultText += '\n自动失败！';
+  } else if (totalRoll === 12) {
+    resultText += '\n自动成功！';
+  } else {
+    const finalResult = totalRoll + skillValue + modifier;
+    resultText += `\n技能加成：${skillValue}${mod !== 0 ? `，修正值：${modifier}` : ''}`;
+    resultText += `\n最终结果：${finalResult}`;
+  }
+
+  // 修复模板字符串嵌套问题
+  const playerPart = seal.format(ctx, `{$t玩家}进行${skillName}检定`);
+  seal.replyToSender(ctx, msg, `${playerPart}\n${resultText}`); 
+  
+  return seal.ext.newCmdExecuteResult(true);
+};
+
+ext.cmdMap['ra'] = cmdRA;
+
+// 保持.st指令集成
+const initCmd = seal.ext.newCmdItemInfo();
+initCmd.name = 'st';
+initCmd.help = '初始化角色属性，示例：.st 健康:5 意志力:4 [技能名]:值';
+initCmd.solve = (ctx, msg, cmdArgs) => {
+  const args = cmdArgs.getArgN(1).split(' ');
+  const output = [];
+  
+  for (const arg of args) {
+    if (!arg) continue;
+    const [key, value] = arg.split(':');
+    const numVal = parseInt(value);
+    
+    if (!key || isNaN(numVal)) {
+      output.push(`无效参数：${arg}`);
+      continue;
+    }
+
+    // 处理健康属性
+    if (key === '健康') {
+      seal.vars.intSet(ctx, '健康', numVal);
+      seal.vars.intSet(ctx, '生命值上限', numVal);
+      seal.vars.intSet(ctx, '生命值', numVal);
+      output.push(`HP上限/当前值已设为 ${numVal}`);
+    }
+    // 处理意志力属性
+    else if (key === '意志力') {
+      seal.vars.intSet(ctx, '意志力', numVal);
+      seal.vars.intSet(ctx, '士气值上限', numVal);
+      seal.vars.intSet(ctx, '士气值', numVal);
+      output.push(`MOR上限/当前值已设为 ${numVal}`);
+    }
+    // 处理其他技能
+    else {
+      seal.vars.intSet(ctx, key, numVal);
+      output.push(`${key} 已设为 ${numVal}`);
+    }
+  }
+
+  seal.replyToSender(ctx, msg, output.join('\n') || '请输入有效参数，示例：.st 健康:5 意志力:4 逻辑思维:2');
+  return seal.ext.newCmdExecuteResult(true);
+};
+
+ext.cmdMap['st'] = initCmd;
