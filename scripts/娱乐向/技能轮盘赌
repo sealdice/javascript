@@ -1,0 +1,468 @@
+"use strict";
+// ==UserScript==
+// @name         技能轮盘赌
+// @author       四点猫
+// @version      1.6.3
+// @description  传统的轮盘赌🙋👆就是把这六发子弹转几转😆好无趣🤣好无聊🤗而技能轮盘赌👈😆👉就是在传统的轮盘赌🧐加入技能☝好好玩😋要爆了💥💥 技能轮盘赌😈飞沙走石😊🤞技能轮盘赌🧢👌😲力拔山兮💪🏻😤轮盘赌多模式集合，支持Bot对战。基于nao老师的俄罗斯转盘扩展上增添了地狱模式，彩蛋模式，高加索轮盘和人机对战功能。让我们感谢deepseek的大力支持。指令：.开枪设置
+// @timestamp    1674126169
+// @license      Apache-2
+// @homepageURL  https://github.com/sealdice/javascript
+// ==/UserScript==
+exports.__esModule = true;
+var ext = seal.ext.find('不是英文');
+if (!ext) {
+    ext = seal.ext["new"]('不是英文', 'nao', '1.0.0');
+    seal.ext.register(ext);
+}
+var cmd = seal.ext.newCmdItemInfo();
+cmd.name = '开枪';
+cmd.help = '俄罗斯轮盘赌多模式集合，支持Bot对战\n指令：.开枪';
+cmd.disabledInPrivate = true;
+cmd.solve = function (ctx, msg, argv) {
+    var key = cmd.name + msg.groupId;
+    var ret = seal.ext.newCmdExecuteResult(true);
+    var data = JSON.parse(ext.storageGet(key) || '[]');
+    var text = '';
+    var rand = function (min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; };
+    
+    var rawArgs = msg.message;
+    var arg1 = argv.getArgN(1);
+    var arg2 = argv.getArgN(2);
+    
+    // ========== 辅助函数：Bot自动开枪 ==========
+    var botFire = function(mode, currentShot, shotData) {
+        var botText = '';
+        var now = shotData.shift();
+        
+        if (now) { // Bot中弹
+            if (mode === 'hell') {
+                botText = '🤖🤖 Bot给自己开了第' + currentShot + '枪...\n💥💥 "BANG！"\n' +
+                         '☠☠️ Bot被炸成了零件！';
+            } else if (mode === 'caucasus') {
+                botText = '🤖🤖 Bot给自己开了第' + currentShot + '枪...\n💥💥 "砰！"\n' +
+                         '🏔🏔️ 高加索的山风带走了Bot的硅基灵魂';
+            } else {
+                botText = '🤖🤖 Bot给自己开了第' + currentShot + '枪...\n💥💥 "砰！"\n' +
+                         '⚙⚙️ Bot的电路板冒烟了！';
+            }
+        } else { // Bot空枪
+            botText = '🤖🤖 Bot给自己开了第' + currentShot + '枪...\n' +
+                     '🔧🔧 "咔哒。"\n' +
+                     '✅ Bot的CPU还在运转';
+        }
+        
+        return {text: botText, data: shotData, hit: !!now};
+    };
+    
+    // ========== 指令系统 ==========
+    
+    // 帮助指令
+    if (arg1 == 'help') {
+        ret.showHelp = true;
+        return ret;
+    }
+    
+    // 查看设置指令
+    if (rawArgs.includes('设置') || rawArgs.includes('状态') || arg1 === '设置' || arg1 === '状态') {
+        var activeMode = ext.storageGet('roulette_active_mode_' + msg.groupId) || 'classic';
+        var prob = parseInt(ext.storageGet('roulette_probability_' + msg.groupId) || '0');
+        var botEnabled = ext.storageGet('roulette_bot_enabled_' + msg.groupId) === 'true';
+        var playerCount = parseInt(ext.storageGet('roulette_player_count_' + msg.groupId) || '1');
+        
+        text = '🎰🎰 俄罗斯轮盘 - 当前状态\n';
+        text += '====================\n';
+        
+        if (activeMode === 'classic') {
+            text += '🔫🔫 【经典模式】6发1实弹\n';
+        } else if (activeMode === 'hell') {
+            text += '🔥 【地狱模式】6发全实弹\n';
+        } else if (activeMode === 'caucasus') {
+            text += '🏔🏔️ 【高加索模式】6发5实弹\n';
+        } else if (activeMode === 'egg') {
+            text += '🎲🎲 【彩蛋模式】全空概率：' + prob + '%\n';
+        }
+        
+        text += '\n🤖🤖 Bot对战：' + (botEnabled ? '✅ 开启' : '❌❌ 关闭') + '\n';
+        if (botEnabled) {
+            text += '👥👥 参与人数：' + playerCount + '人（包含Bot）\n';
+            text += '🔄🔄 开枪顺序：玩家 → 玩家 → ... → Bot（循环）\n';
+        }
+        
+        text += '\n💡💡 可用指令：\n';
+        text += '`.开枪经典` `.开枪地狱` `.开枪高加索`\n';
+        text += '`.开枪彩蛋` `.开枪概率 <数字>`\n';
+        text += '`.开枪bot` - 开启/关闭Bot对战\n';
+        text += '`.开枪参与 <人数>` - 设置参与人数(2-6)\n';
+        text += '`.开枪设置` - 显示此状态';
+        
+        seal.replyToSender(ctx, msg, text);
+        return ret;
+    }
+    
+    // Bot对战开关
+    if (rawArgs.includes('bot') || arg1 === 'bot') {
+        var botKey = 'roulette_bot_enabled_' + msg.groupId;
+        var currentBotEnabled = ext.storageGet(botKey) === 'true';
+        var newBotEnabled = !currentBotEnabled;
+        ext.storageSet(botKey, newBotEnabled.toString());
+        
+        if (newBotEnabled) {
+            // 开启Bot时，设置默认参与人数为2
+            var countKey = 'roulette_player_count_' + msg.groupId;
+            if (!ext.storageGet(countKey)) {
+                ext.storageSet(countKey, '2');
+            }
+            
+            // 重置当前开枪索引
+            ext.storageSet('roulette_shot_index_' + msg.groupId, '0');
+            
+            text = '🤖🤖 Bot对战模式已开启！\n';
+            text += '👥👥 当前参与人数：2人（1玩家 + 1Bot）\n';
+            text += '🔄🔄 开枪顺序：玩家 → Bot → 玩家 → Bot ...\n';
+            text += '💡💡 使用`.开枪参与 <人数>`调整参与人数';
+        } else {
+            text = '🤖🤖 Bot对战模式已关闭';
+        }
+        
+        seal.replyToSender(ctx, msg, text);
+        return ret;
+    }
+    
+    // 设置参与人数
+    if (rawArgs.includes('参与')) {
+        var count = 0;
+        
+        // 尝试从原始消息中提取数字
+        var countMatch = rawArgs.match(/参与\s*(\d+)/);
+        if (countMatch) {
+            // 格式1: ".开枪参与3" 或 ".开枪参与 3"
+            count = parseInt(countMatch[1]);
+        } else if (arg1 === '参与' && arg2) {
+            // 格式2: ".开枪 参与 3"（全空格）
+            count = parseInt(arg2);
+        } else if (arg1 && arg1.startsWith('参与')) {
+            // 格式3: ".开枪 参与3"（半空格）
+            var numMatch = arg1.match(/参与(\d+)/);
+            if (numMatch) {
+                count = parseInt(numMatch[1]);
+            }
+        }
+        
+        if (isNaN(count) || count < 2 || count > 6) {
+            seal.replyToSender(ctx, msg, '❌❌ 参与人数需在 2-6 之间。示例：`.开枪参与 3` 或 `.开枪参与3`');
+            return ret;
+        }
+        
+        var botKey = 'roulette_bot_enabled_' + msg.groupId;
+        if (ext.storageGet(botKey) !== 'true') {
+            seal.replyToSender(ctx, msg, '❌❌ 请先开启Bot对战模式：`.开枪bot`');
+            return ret;
+        }
+        
+        ext.storageSet('roulette_player_count_' + msg.groupId, count.toString());
+        // 重置当前开枪索引
+        ext.storageSet('roulette_shot_index_' + msg.groupId, '0');
+        
+        text = '👥👥 参与人数已设置为：' + count + '人\n';
+        text += '👤👤 真实玩家：' + (count - 1) + '人\n';
+        text += '🤖🤖 Bot：1人\n';
+        text += '🔄🔄 开枪顺序：玩家 → 玩家 → ... → Bot（循环）\n';
+        text += '🎮🎮 输入`.开枪`开始游戏';
+        
+        seal.replyToSender(ctx, msg, text);
+        return ret;
+    }
+    
+    // 概率设置指令
+    if (rawArgs.includes('概率') || rawArgs.includes('几率')) {
+        var probability = 0;
+        
+        // 尝试从原始消息中提取数字
+        var probMatch = rawArgs.match(/(?:概率|几率)\s*(\d+)/);
+        if (probMatch) {
+            // 格式1: ".开枪概率25" 或 ".开枪 概率25" 或 ".开枪 概率 25"
+            probability = parseInt(probMatch[1]);
+        } else if (arg1 === '概率' || arg1 === '几率') {
+            // 格式2: ".开枪 概率 25"（全空格）
+            probability = parseInt(arg2 || '0');
+        }
+        
+        if (isNaN(probability) || probability < 0 || probability > 100) {
+            seal.replyToSender(ctx, msg, '❌❌ 概率需在 0-100 之间。示例：`.开枪概率 25` 或 `.开枪概率25`');
+            return ret;
+        }
+        
+        ext.storageSet('roulette_probability_' + msg.groupId, probability.toString());
+        ext.storageSet('roulette_active_mode_' + msg.groupId, 'egg');
+        
+        var replyText = '🎲🎲 彩蛋模式已激活，全空概率：' + probability + '%\n';
+        if (probability === 0) {
+            replyText += '💀💀 相当于经典模式 (1实弹)';
+        } else if (probability === 100) {
+            replyText += '🎯🎯 相当于训练模式 (全空弹)';
+        }
+        
+        seal.replyToSender(ctx, msg, replyText);
+        return ret;
+    }
+    
+    // 模式切换指令
+    var modeSwitch = null;
+    if (rawArgs.includes('经典')) modeSwitch = 'classic';
+    if (rawArgs.includes('地狱')) modeSwitch = 'hell';
+    if (rawArgs.includes('高加索')) modeSwitch = 'caucasus';
+    if (rawArgs.includes('彩蛋')) modeSwitch = 'egg';
+    
+    if (modeSwitch !== null) {
+        // 切换模式时强制重置游戏状态
+        data = []; // 清空当前游戏数据
+        ext.storageSet(key, JSON.stringify(data)); // 保存清空后的数据
+        
+        // 重置所有游戏状态
+        ext.storageSet('roulette_shot_index_' + msg.groupId, '0'); // 重置开枪索引
+        ext.storageSet('roulette_bot_dead_' + msg.groupId, 'false'); // 重置Bot死亡状态
+        
+        // 设置新模式
+        ext.storageSet('roulette_active_mode_' + msg.groupId, modeSwitch);
+        
+        if (modeSwitch === 'classic') {
+            text = '🔫🔫 已切换至【经典模式】\n游戏已重置，6发1实弹，生存率83.3%';
+        } else if (modeSwitch === 'hell') {
+            text = '🔥 已切换至【地狱模式】\n游戏已重置，6发全实弹，第一枪必死';
+        } else if (modeSwitch === 'caucasus') {
+            text = '🏔🏔️ 已切换至【高加索模式】\n游戏已重置，6发5实弹，生存率16.7%';
+        } else if (modeSwitch === 'egg') {
+            var prob = parseInt(ext.storageGet('roulette_probability_' + msg.groupId) || '10');
+            text = '🎲🎲 已切换至【彩蛋模式】\n游戏已重置，当前全空概率：' + prob + '%';
+        }
+        
+        text += '\n\n输入 `.开枪` 开始新游戏。';
+        seal.replyToSender(ctx, msg, text);
+        return ret;
+    }
+    
+    // ========== 游戏逻辑 ==========
+    
+    // 检查Bot对战状态
+    var botEnabled = ext.storageGet('roulette_bot_enabled_' + msg.groupId) === 'true';
+    var playerCount = parseInt(ext.storageGet('roulette_player_count_' + msg.groupId) || '1');
+    var shotIndex = parseInt(ext.storageGet('roulette_shot_index_' + msg.groupId) || '0');
+    var activeMode = ext.storageGet('roulette_active_mode_' + msg.groupId) || 'classic';
+    
+    // 如果有游戏进度，继续游戏
+    if (data.length > 0) {
+        var totalShots = 6;
+        var shotsFired = totalShots - data.length;
+        var currentShot = shotsFired + 1;
+        
+        // 修复：正确的Bot回合判断逻辑
+        // 先检查Bot是否还活着
+        var botDead = ext.storageGet('roulette_bot_dead_' + msg.groupId) === 'true';
+        var isBotTurn = false;
+        
+        if (botEnabled && !botDead) {
+            // 修复关键：Bot只在每轮最后一枪开枪，但要排除第0枪
+            // 参与人数6人时：第6、12、18...枪是Bot
+            // 参与人数5人时：第5、10、15...枪是Bot
+            // 参与人数4人时：第4、8、12...枪是Bot
+            // 参与人数3人时：第3、6、9...枪是Bot
+            // 参与人数2人时：第2、4、6...枪是Bot
+            isBotTurn = (currentShot % playerCount === 0) && (currentShot > 0);
+        }
+        
+        if (isBotTurn) {
+            // Bot的开枪回合
+            shotIndex = (shotIndex + 1) % playerCount;
+            ext.storageSet('roulette_shot_index_' + msg.groupId, shotIndex.toString());
+            
+            var botResult = botFire(activeMode, currentShot, data);
+            data = botResult.data;
+            
+            text = botResult.text + '\n';
+            
+            // ========== 修复：高加索模式Bot空枪胜利判断 ==========
+            if (activeMode === 'caucasus' && !botResult.hit) {
+                // 高加索模式：Bot空枪 → Bot胜利
+                text += '\n\n✨✨✨ Bot完成了不可能的挑战！✨✨✨\n';
+                text += '🏆🏆 Bot在5颗实弹中找到了唯一的生路！\n';
+                text += '🤖🤖 Bot胜利了！\n';
+                data = [];
+                text += '-游戏结束，输入 .开枪 重新开始-';
+                ext.storageSet(key, JSON.stringify(data));
+                seal.replyToSender(ctx, msg, text);
+                return ret;
+            }
+            
+            if (botResult.hit) {
+                // Bot中弹的处理
+                if (activeMode === 'caucasus') {
+                    // 高加索模式：Bot中弹，标记为死亡
+                    text += '\n💀💀 Bot中弹了，退出游戏！\n';
+                    ext.storageSet('roulette_bot_dead_' + msg.groupId, 'true');
+                    
+                    if (data.length === 0) {
+                        text += '🏔🏔️ 子弹打光了，游戏结束！\n';
+                        text += '🎮🎮 输入`.开枪`重新开始';
+                        data = [];
+                    } else {
+                        text += '🔫🔫 现在只剩你一人继续游戏。\n';
+                        text += '剩余 ' + data.length + ' 发子弹。';
+                        
+                        // 重置索引，因为现在只有玩家一人
+                        ext.storageSet('roulette_shot_index_' + msg.groupId, '0');
+                        shotIndex = 0;
+                    }
+                } else {
+                    // 其他模式：Bot中弹，玩家胜利
+                    text += '\n🎉🎉 你赢了！Bot被淘汰了！\n';
+                    data = [];
+                    text += '-游戏结束，输入 .开枪 重新开始-';
+                }
+            } else {
+                // Bot空枪
+                if (activeMode === 'caucasus') {
+                    // 高加索模式：Bot找到空弹 → Bot胜利
+                    if (data.length === 0) {
+                        text += '\n\n✨✨✨ Bot完成了不可能的挑战！✨✨✨\n';
+                        text += '🏆🏆 Bot在5颗实弹中找到了唯一的生路！\n';
+                        text += '🤖🤖 Bot胜利了！\n';
+                        data = [];
+                        text += '-游戏结束，输入 .开枪 重新开始-';
+                    } else {
+                        text += '\n剩余 ' + data.length + ' 发子弹。\n';
+                        text += '🔫🔫 轮到你了。';
+                    }
+                } else if (data.length === 0) {
+                    if (activeMode === 'hell') {
+                        text += '\n\n👻👻 奇迹？BUG？';
+                    } else {
+                        text += '\n\n🎉🎉 Bot打完了所有子弹，平局！';
+                    }
+                    text += '\n\n-弹夹已空，输入 .开枪 重新开始-';
+                } else {
+                    text += '\n\n🔫🔫 轮到你了。';
+                }
+            }
+            
+        } else {
+            // 玩家的开枪回合
+            shotIndex = (shotIndex + 1) % playerCount;
+            ext.storageSet('roulette_shot_index_' + msg.groupId, shotIndex.toString());
+            
+            var now = data.shift();
+            
+            if (now) { // 玩家中弹
+                if (activeMode === 'hell') {
+                    text = '💀💀 第' + currentShot + '枪，实弹。\n🔥 地狱欢迎你。';
+                    data = [];
+                    text += '\n\n-游戏结束，输入 .开枪 重新开始-';
+                } else if (activeMode === 'caucasus') {
+                    // 高加索模式：玩家中弹，继续游戏
+                    text = '🏔🏔️ 第' + currentShot + '枪，实弹。\n⛰⛰⛰️ 高加索的寒风呼啸而过...\n';
+                    text += '💀💀 你中弹了，退出游戏！\n';
+                    text += '剩余 ' + data.length + ' 发子弹。\n';
+                    
+                    if (data.length === 0) {
+                        text += '🏔🏔️ 子弹打光了，游戏结束！\n';
+                        text += '🎮🎮 输入`.开枪`重新开始';
+                        data = [];
+                    } else {
+                        text += '🔫🔫 继续游戏。';
+                    }
+                } else {
+                    // 经典/彩蛋模式：玩家中弹死亡
+                    text = '💀💀 第' + currentShot + '枪，实弹。\n哦，死了啦？';
+                    data = [];
+                    text += '\n\n-游戏结束，输入 .开枪 重新开始-';
+                }
+                
+            } else { // 玩家空枪
+                if (activeMode === 'caucasus') {
+                    // 高加索模式：玩家找到空弹 → 立即胜利！
+                    text = '🏔🏔️ 『第' + currentShot + '枪』\n"咔哒。"\n\n';
+                    text += '✨✨✨ 高加索的传奇！✨✨✨\n';
+                    text += '🦅🦅🦅 你在5颗实弹中找到了唯一的生路！\n';
+                    text += '👑👑 高加索的山鹰！真正的天选之人！\n';
+                    data = [];
+                    text += '-游戏结束，输入 .开枪 重新开始-';
+                } else {
+                    // 其他模式：普通空枪逻辑
+                    text = '🔫🔫 第' + currentShot + '枪，空枪。\n剩余 ' + data.length + ' 发。';
+                    
+                    // 判断游戏是否自然结束（弹夹打空）
+                    if (data.length === 0) {
+                        if (activeMode === 'hell') {
+                            text += '\n\n👻👻 奇迹？BUG？';
+                        } else if (activeMode === 'egg') {
+                            var prob = parseInt(ext.storageGet('roulette_probability_' + msg.groupId) || '0');
+                            if (prob === 100) {
+                                text += '\n\n🎯🎯 训练完成，安全无忧。';
+                            } else if (prob === 0) {
+                                text += '\n\n🎉🎉 存活！运气不错。';
+                            } else {
+                                text += '\n\n🎲🎲 彩蛋模式，存活。';
+                            }
+                        } else {
+                            // classic
+                            text += '\n\n🎉🎉 存活！运气不错。';
+                        }
+                        text += '\n\n-游戏结束，输入 .开枪 重新开始-';
+                    } else {
+                        // 不再自动触发Bot开枪，只更新shotIndex，然后返回
+                        if (data.length <= 2) {
+                            text += '\n<最后' + data.length + '发...>';
+                        }
+                    }
+                }
+            }
+        }
+        
+        ext.storageSet(key, JSON.stringify(data));
+        seal.replyToSender(ctx, msg, text);
+        return ret;
+    }
+    
+    // ========== 开始新游戏 ==========
+    if (data.length == 0) {
+        // 重置开枪索引和Bot死亡状态
+        ext.storageSet('roulette_shot_index_' + msg.groupId, '0');
+        ext.storageSet('roulette_bot_dead_' + msg.groupId, 'false'); // 重置Bot死亡状态
+        
+        if (activeMode === 'classic') {
+            data = new Array(6).fill(null);
+            data[rand(0,5)] = 'BOOM';
+            text = '🔫🔫 【经典模式】装弹完毕，6发1实弹。';
+        } else if (activeMode === 'hell') {
+            data = new Array(6).fill('BOOM');
+            text = '🔥 【地狱模式】6颗实弹装填！必死之局。';
+        } else if (activeMode === 'caucasus') {
+            data = new Array(6).fill('BOОМ');
+            var emptySlot = rand(0,5);
+            data[emptySlot] = null;
+            text = '🏔🏔️ 【高加索模式】6发5实弹装填，寻找唯一的生路。';
+        } else if (activeMode === 'egg') {
+            var prob = parseInt(ext.storageGet('roulette_probability_' + msg.groupId) || '0');
+            data = new Array(6).fill(null);
+            if (Math.random() * 100 > prob) {
+                data[rand(0,5)] = 'BOOM';
+            }
+            text = '🎲🎲 【彩蛋模式】装弹完毕，全空概率' + prob + '%。';
+        }
+        
+        if (botEnabled) {
+            text += '\n\n🤖🤖 Bot对战已开启，参与人数：' + playerCount + '人';
+            text += '\n👤👤 真实玩家：' + (playerCount - 1) + '人';
+            text += '\n🤖🤖 Bot：1人';
+            text += '\n🔄🔄 开枪顺序：玩家 → 玩家 → ... → Bot（循环）';
+        }
+        
+        ext.storageSet(key, JSON.stringify(data));
+        text += '\n\n输入 `.开枪` 开始。';
+        seal.replyToSender(ctx, msg, text);
+        return ret;
+    }
+    
+    return ret;
+};
+ext.cmdMap['开枪'] = cmd;
+
